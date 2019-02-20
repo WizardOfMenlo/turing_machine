@@ -5,3 +5,4 @@ authors = ["Giacomo Fenzi <giacomofenzi@outlook.com>"]
 edition = "2018"
 
 [dependencies]
+clap = "2.32"
