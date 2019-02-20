@@ -1,10 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::io::{self, BufRead, BufReader, Read};
 
-use crate::machine_representation::{
-    expanded::{TmRepresentation, TransitionTable},
-    State,
-};
+use crate::machine_representation::{State, TmRepresentation, TransitionTable};
 
 use lazy_static::lazy_static;
 
@@ -65,7 +62,7 @@ lazy_static! {
 /// let res = parse(test_string.as_bytes().by_ref());
 /// assert!(res.is_err());
 /// ```
-pub fn parse(source: impl Read) -> Result<TmRepresentation, ParsingError> {
+pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError> {
     // Convert to a buffered reader
     let mut reader = BufReader::new(source);
     let mut current_line = String::new();
@@ -172,7 +169,7 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation, ParsingError> {
 
     Ok(TmRepresentation::new(
         num_states,
-        &starting_state.unwrap(),
+        starting_state.unwrap(),
         states_map,
         alphabet,
         TransitionTable::build_from_iter(lines.into_iter())

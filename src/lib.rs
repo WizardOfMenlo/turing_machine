@@ -1,10 +1,7 @@
 pub mod machine_parser;
-pub(crate) mod machine_representation;
+pub mod machine_representation;
 
-use crate::machine_representation::{
-    compressed::{Action, TmRepresentation},
-    Motion,
-};
+use crate::machine_representation::{Action, Motion, TmRepresentation};
 
 use std::fmt;
 use std::iter;
@@ -13,7 +10,7 @@ use std::iter;
 /// # Usage
 /// ```
 /// use turing_machine::{
-///     machine_representation::compressed::TmRepresentation,
+///     machine_representation::TmRepresentation,
 ///     TuringMachine, TuringMachineBuilder, DeterministicTuringMachine,
 /// };
 ///
@@ -24,7 +21,7 @@ use std::iter;
 /// ```
 #[derive(Debug, Default)]
 pub struct TuringMachineBuilder {
-    representation: TmRepresentation,
+    representation: TmRepresentation<usize>,
     tape: Vec<char>,
 }
 
@@ -46,7 +43,7 @@ impl TuringMachineBuilder {
     }
 
     /// Sets the representation of the machine
-    pub fn representation<R: Into<TmRepresentation>>(mut self, repr: R) -> Self {
+    pub fn representation<R: Into<TmRepresentation<usize>>>(mut self, repr: R) -> Self {
         self.representation = repr.into();
         self
     }
@@ -103,7 +100,7 @@ pub trait TuringMachineExt: TuringMachine + From<TuringMachineBuilder> {}
 #[derive(Debug)]
 pub struct DeterministicTuringMachine {
     tape: Vec<char>,
-    representation: TmRepresentation,
+    representation: TmRepresentation<usize>,
     current_cell: usize,
     current_state: usize,
     reject_state: usize,
@@ -138,7 +135,7 @@ impl DeterministicTuringMachine {
         }
     }
 
-    fn apply_action(&mut self, act: &Action) {
+    fn apply_action(&mut self, act: &Action<usize>) {
         match act.motion() {
             Motion::Right => {
                 if self.tape.len() <= self.current_cell {
