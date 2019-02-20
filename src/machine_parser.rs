@@ -1,13 +1,10 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::io;
-use std::io::BufRead;
-use std::io::BufReader;
-use std::io::Read;
+use std::collections::{HashMap, HashSet};
+use std::io::{self, BufRead, BufReader, Read};
 
-use crate::machine_representation::expanded::TmRepresentation;
-use crate::machine_representation::expanded::TransitionTable;
-use crate::machine_representation::State;
+use crate::machine_representation::{
+    expanded::{TmRepresentation, TransitionTable},
+    State,
+};
 
 #[derive(Debug)]
 pub enum ParsingError {

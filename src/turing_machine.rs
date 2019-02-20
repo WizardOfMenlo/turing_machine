@@ -1,7 +1,7 @@
-use crate::machine_representation::compressed::Action;
-use crate::machine_representation::compressed::TmRepresentation;
-use crate::machine_representation::Motion;
-use crate::machine_representation::State;
+use crate::machine_representation::{
+    compressed::{Action, TmRepresentation},
+    Motion, State,
+};
 
 use std::fmt;
 use std::iter;
@@ -31,13 +31,14 @@ impl TuringMachineBuilder {
     }
 
     pub fn validate(self) -> Option<Self> {
-        match self
+        if self
             .tape
             .iter()
             .any(|tape_elem| !self.representation.alphabet().contains(tape_elem))
         {
-            true => None,
-            false => Some(self),
+            None
+        } else {
+            Some(self)
         }
     }
 }
@@ -135,7 +136,7 @@ impl From<TuringMachineBuilder> for DeterministicTuringMachine {
 
 impl fmt::Display for DeterministicTuringMachine {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Current State: {}\n", self.current_state)?;
+        writeln!(f, "Current State: {}", self.current_state)?;
         self.tape.iter().for_each(|v| write!(f, "{}", v).unwrap());
         Ok(())
     }

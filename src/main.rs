@@ -2,9 +2,7 @@ mod machine_parser;
 mod machine_representation;
 mod turing_machine;
 
-use crate::turing_machine::DeterministicTuringMachine;
-use crate::turing_machine::TuringMachine;
-use crate::turing_machine::TuringMachineBuilder;
+use crate::turing_machine::{DeterministicTuringMachine, TuringMachine, TuringMachineBuilder};
 use std::fs::File;
 
 fn main() {

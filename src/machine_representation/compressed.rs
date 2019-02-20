@@ -1,7 +1,5 @@
-use super::Motion;
-use super::State;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use super::{Motion, State};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Default)]
 pub struct Action {
