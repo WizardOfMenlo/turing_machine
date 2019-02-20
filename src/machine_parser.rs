@@ -6,6 +6,8 @@ use crate::machine_representation::{
     State,
 };
 
+use lazy_static::lazy_static;
+
 /// A Error type for errors returned by [`parse`](fn.parse.html).  
 /// Each variant expresses a particular error type and can be used to diagnose format mistakes
 #[derive(Debug)]
@@ -30,6 +32,16 @@ impl From<io::Error> for ParsingError {
     fn from(err: io::Error) -> Self {
         ParsingError::IOError(err)
     }
+}
+
+lazy_static! {
+    static ref INVALID_STATE_NAMES: HashSet<&'static str> = {
+        let mut s = HashSet::with_capacity(3);
+        s.insert("alphabet");
+        s.insert("+");
+        s.insert("-");
+        s
+    };
 }
 
 /// Function used to parse a [`TmRepresentation`](../machine_representation/expanded/struct.TmRepresentation.html)  
@@ -87,7 +99,12 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation, ParsingError> {
         if num_tokens == 0 || num_tokens > 2 {
             return Err(ParsingError::StatesError);
         }
+
         let state_name = tokens[0].trim();
+        if INVALID_STATE_NAMES.contains(&state_name) {
+            return Err(ParsingError::StatesError);
+        }
+
         let acceptance = match tokens.get(1).map(|s| s.trim()) {
             Some("+") => State::Accepting,
             Some("-") => State::Rejecting,
@@ -126,6 +143,7 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation, ParsingError> {
 
     // Gather alphabet
     let mut alphabet = HashSet::with_capacity(num_alphabet_elements + 1);
+
     // Insert mandatory blank char
     alphabet.insert('_');
 
@@ -134,7 +152,12 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation, ParsingError> {
         if token.len() != 1 {
             return Err(ParsingError::AlphabetError);
         }
-        alphabet.insert(token.chars().next().unwrap());
+        let c = token.chars().next().unwrap();
+        // _ is not valid by specs
+        if c == '_' {
+            return Err(ParsingError::AlphabetError);
+        }
+        alphabet.insert(c);
     }
 
     // Sanity checks
