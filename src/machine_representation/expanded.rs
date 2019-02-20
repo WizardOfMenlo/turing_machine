@@ -74,13 +74,33 @@ impl TransitionTable {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct TmRepresentation {
     num_states: usize,
     starting_state: String,
     states: HashMap<String, State>,
     alphabet: HashSet<char>,
     transition_table: TransitionTable,
+}
+
+// Needed, as an accepting state and a rejecting states are mandatory
+impl Default for TmRepresentation {
+    fn default() -> Self {
+        let mut default_states = HashMap::with_capacity(2);
+        default_states.insert("qr".to_owned(), State::Rejecting);
+        default_states.insert("qa".to_owned(), State::Accepting);
+
+        let mut default_alpha = HashSet::with_capacity(1);
+        default_alpha.insert('_');
+
+        TmRepresentation {
+            num_states: 2,
+            starting_state: "qr".to_string(),
+            states: default_states,
+            alphabet: default_alpha,
+            transition_table: TransitionTable::default(),
+        }
+    }
 }
 
 impl TmRepresentation {

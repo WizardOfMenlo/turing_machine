@@ -1,12 +1,8 @@
-mod machine_parser;
-mod machine_representation;
-mod turing_machine;
-
-use crate::machine_parser::ParsingError;
-use crate::turing_machine::{DeterministicTuringMachine, TuringMachine, TuringMachineBuilder};
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{self, Read};
+use turing_machine::machine_parser::{self, ParsingError};
+use turing_machine::{DeterministicTuringMachine, TuringMachine, TuringMachineBuilder};
 
 #[derive(Debug)]
 enum ErrorType {

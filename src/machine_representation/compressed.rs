@@ -43,12 +43,30 @@ impl TransitionTable {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct TmRepresentation {
     states: HashMap<usize, State>,
     alphabet: HashSet<char>,
     transition_table: TransitionTable,
     starting_state: usize,
+}
+
+impl Default for TmRepresentation {
+    fn default() -> Self {
+        let mut default_states = HashMap::with_capacity(2);
+        default_states.insert(0, State::Rejecting);
+        default_states.insert(1, State::Accepting);
+
+        let mut default_alpha = HashSet::with_capacity(1);
+        default_alpha.insert('_');
+
+        TmRepresentation {
+            states: default_states,
+            alphabet: default_alpha,
+            transition_table: TransitionTable::default(),
+            starting_state: 0,
+        }
+    }
 }
 
 impl TmRepresentation {

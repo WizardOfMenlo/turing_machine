@@ -6,12 +6,23 @@ use crate::machine_representation::{
     State,
 };
 
+/// A Error type for errors returned by [`parse`](fn.parse.html).  
+/// Each variant expresses a particular error type and can be used to diagnose format mistakes
 #[derive(Debug)]
 pub enum ParsingError {
+    /// The states parsing failed
     StatesError,
+
+    /// An integer field could not be converted
     IntParsing,
+
+    /// The alphabet is inconsistent
     AlphabetError,
+
+    /// The transition table could not be parsed
     TransitionTableError,
+
+    /// Error encountered in interacting with `io`
     IOError(io::Error),
 }
 
@@ -21,6 +32,27 @@ impl From<io::Error> for ParsingError {
     }
 }
 
+/// Function used to parse a [`TmRepresentation`](../machine_representation/expanded/struct.TmRepresentation.html)  
+/// Returns a `Result`, which on the `Err` case stores a [`ParsingError`](enum.ParsingError.html) detailing the error type
+/// # Usage:
+/// ```
+/// # use std::io::Read;
+/// use turing_machine::machine_parser::parse;
+///
+/// // Ideally this will be read from a file
+/// let test_string = "states 3\ns0\nqa +\nqr -\nalphabet 1 a\ns0 a s0 a R\ns0 b qa b R\ns0 _ qr _ S\n";
+/// let res = parse(test_string.as_bytes().by_ref());
+/// assert!(res.is_ok());
+/// ```
+/// Invalid configuration:
+/// ```
+/// # use std::io::Read;
+/// use turing_machine::machine_parser::parse;
+///
+/// let test_string = "some gibberish";
+/// let res = parse(test_string.as_bytes().by_ref());
+/// assert!(res.is_err());
+/// ```
 pub fn parse(source: impl Read) -> Result<TmRepresentation, ParsingError> {
     // Convert to a buffered reader
     let mut reader = BufReader::new(source);
