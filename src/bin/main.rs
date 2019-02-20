@@ -1,9 +1,11 @@
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{self, Read};
-use std::path::Path;
 use turing_machine::machine_parser::{self, ParsingError};
-use turing_machine::{DeterministicTuringMachine, TuringMachine, TuringMachineBuilder};
+use turing_machine::{
+    DeterministicTuringMachine, ExecutionResult, TuringMachine, TuringMachineBuilder,
+    TuringMachineExt, TuringMachineStatsExt,
+};
 
 #[derive(Debug)]
 enum ErrorType {
@@ -23,14 +25,19 @@ impl From<ParsingError> for ErrorType {
     }
 }
 
-fn run(repr_path: &str, tape_file: Option<&str>) -> Result<(), ErrorType> {
+fn run<T: TuringMachineExt>(
+    repr_path: &str,
+    tape_file: Option<&str>,
+) -> Result<ExecutionResult<T>, ErrorType> {
     // One of the two branches must necessarily be true
     let tape: Vec<char> = match tape_file {
         Some(p) => {
             let mut input_file = File::open(p)?;
             let mut buf = String::new();
             input_file.read_to_string(&mut buf)?;
-            buf.chars().collect()
+            buf.chars()
+                .filter(|c| c.is_ascii() && !c.is_whitespace())
+                .collect()
         }
         None => Vec::new(),
     };
@@ -43,15 +50,21 @@ fn run(repr_path: &str, tape_file: Option<&str>) -> Result<(), ErrorType> {
     let builder = TuringMachineBuilder::new().representation(repr).tape(tape);
 
     // Run to completion
-    let mut machine: DeterministicTuringMachine = builder.into();
-    machine.run();
+    let machine: T = builder.into();
+    let mut machine = TuringMachineStatsExt::new(machine);
 
-    Ok(())
+    Ok(machine.execute_and_get_result())
 }
 
-fn get_correct_exit_code(res: Result<(), ErrorType>) -> i32 {
+fn get_correct_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, ErrorType>) -> i32 {
     match res {
-        Ok(()) => 0,
+        Ok(exe) => {
+            if exe.accepting {
+                0
+            } else {
+                1
+            }
+        }
         Err(ty) => match ty {
             ErrorType::ParsingError(_) => 2,
             ErrorType::IOError(_) => 3,
@@ -67,7 +80,7 @@ fn main() {
         .arg(
             Arg::with_name("repr")
                 .required(true)
-                .short("r")
+                .index(1)
                 .takes_value(true)
                 .value_name("FILE")
                 .help("The representation file to use"),
@@ -75,6 +88,7 @@ fn main() {
         .arg(
             Arg::with_name("tapefile")
                 .short("t")
+                .index(2)
                 .takes_value(true)
                 .value_name("TAPE_FILE")
                 .help("A file containing the tape the machine should start on"),
@@ -83,7 +97,7 @@ fn main() {
 
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
-    let result = run(repr_path, matches.value_of("tapefile"));
+    let result = run::<DeterministicTuringMachine>(repr_path, matches.value_of("tapefile"));
     let exit_code = get_correct_exit_code(result);
 
     match exit_code {
