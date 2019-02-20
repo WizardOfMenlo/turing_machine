@@ -17,11 +17,28 @@ impl Default for Motion {
 #[derive(Debug, Clone, PartialEq)]
 pub enum State {
     Accepting,
+    Neutral,
     Rejecting,
+}
+
+impl State {
+    pub fn is_accepting(&self) -> bool {
+        match self {
+            State::Accepting => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_rejecting(&self) -> bool {
+        match self {
+            State::Rejecting => true,
+            _ => false,
+        }
+    }
 }
 
 impl Default for State {
     fn default() -> Self {
-        State::Rejecting
+        State::Neutral
     }
 }

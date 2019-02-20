@@ -9,6 +9,14 @@ pub struct Action {
 }
 
 impl Action {
+    pub(crate) fn new(next_state: usize, tape_output: char, motion: Motion) -> Self {
+        Action {
+            next_state,
+            tape_output,
+            motion,
+        }
+    }
+
     pub fn next_state(&self) -> &usize {
         &self.next_state
     }

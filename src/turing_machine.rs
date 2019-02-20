@@ -1,6 +1,6 @@
 use crate::machine_representation::{
     compressed::{Action, TmRepresentation},
-    Motion, State,
+    Motion,
 };
 
 use std::fmt;
@@ -50,12 +50,13 @@ pub trait TuringMachine: From<TuringMachineBuilder> {
 
     fn step(&mut self);
     fn is_accepting(&self) -> bool;
+    fn is_rejecting(&self) -> bool;
 
     fn run(&mut self) -> bool {
-        while !self.is_accepting() {
+        while !(self.is_accepting() || self.is_rejecting()) {
             self.step();
         }
-        true
+        self.is_accepting()
     }
 }
 
@@ -65,6 +66,7 @@ pub struct DeterministicTuringMachine {
     representation: TmRepresentation,
     current_cell: usize,
     current_state: usize,
+    reject_state: usize,
 }
 
 impl DeterministicTuringMachine {
@@ -95,16 +97,26 @@ impl TuringMachine for DeterministicTuringMachine {
             .validate()
             .expect("Representation must be valid");
         let starting_state = *builder.representation.starting_state();
+        let reject_state = *builder
+            .representation
+            .states()
+            .iter()
+            .filter(|(_, ty)| ty.is_rejecting())
+            .map(|(n, _)| n)
+            .next()
+            .expect("Turing Machines with no reject state are illegal");
+
         DeterministicTuringMachine {
             tape: builder.tape,
             representation: builder.representation,
             current_cell: 0,
             current_state: starting_state,
+            reject_state,
         }
     }
 
     fn step(&mut self) {
-        if self.is_accepting() {
+        if self.is_accepting() || self.is_rejecting() {
             return;
         }
 
@@ -114,17 +126,19 @@ impl TuringMachine for DeterministicTuringMachine {
             .transition_table()
             .get_action(self.current_state, input_char)
             .cloned()
-            .expect("Invalid State");
+            .unwrap_or_else(|| Action::new(self.reject_state, '_', Motion::Left));
 
         self.apply_action(&action);
     }
 
     fn is_accepting(&self) -> bool {
         let state = self.representation.states().get(&self.current_state);
-        match state.expect("Invalid State") {
-            State::Accepting => true,
-            State::Rejecting => false,
-        }
+        state.expect("Invalid State").is_accepting()
+    }
+
+    fn is_rejecting(&self) -> bool {
+        let state = self.representation.states().get(&self.current_state);
+        state.expect("Invalid State").is_rejecting()
     }
 }
 
