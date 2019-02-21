@@ -126,6 +126,7 @@ impl DeterministicTuringMachine {
             .next()
             .expect("Turing Machines with no reject state are illegal");
 
+
         DeterministicTuringMachine {
             tape: builder.tape,
             representation: builder.representation,
@@ -136,14 +137,17 @@ impl DeterministicTuringMachine {
     }
 
     fn apply_action(&mut self, act: &Action<usize>) {
+
+        println!("Bound checking... Tape: {}, CurrentCell: {}", self.tape.len(), self.current_cell);
+        // Bound checks 
+        if self.current_cell + 1 >= self.tape.len() {
+            let new_section = iter::repeat('_').take(self.tape.len() + 2);
+            self.tape.extend(new_section);
+        }
+        println!("Now Tape: {}, CurrentCell: {}", self.tape.len(), self.current_cell);
+
         match act.motion() {
-            Motion::Right => {
-                if self.tape.len() <= self.current_cell {
-                    let new_section = iter::repeat('_').take(self.tape.len() + 1);
-                    self.tape.extend(new_section);
-                }
-                self.current_cell += 1;
-            }
+            Motion::Right => self.current_cell += 1,
             Motion::Left => self.current_cell = self.current_cell.saturating_sub(1),
             Motion::Stay => {}
         };
@@ -160,11 +164,11 @@ impl TuringMachine for DeterministicTuringMachine {
             return;
         }
 
-        let input_char = self.tape[self.current_cell];
+        let input_char = self.tape.get(self.current_cell).unwrap_or(&'_');
         let action = self
             .representation
             .transition_table()
-            .get_action(self.current_state, input_char)
+            .get_action(self.current_state, *input_char)
             .cloned()
             .unwrap_or_else(|| Action::new(self.reject_state, '_', Motion::Left));
 
