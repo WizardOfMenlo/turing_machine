@@ -1,5 +1,6 @@
 pub mod machine_parser;
 pub mod machine_representation;
+mod transition_table;
 
 use crate::machine_representation::{Action, Motion, TmRepresentation};
 
