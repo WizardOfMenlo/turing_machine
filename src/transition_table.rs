@@ -11,9 +11,11 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::machine_representation::Action;
+use crate::builders::TransitionTableBuilder;
+use crate::common::Action;
 
-pub trait TransitionTable<StateTy>
+/// The Transition table for a [`TuringMachine`](../trait.TuringMachine.html)
+pub trait TransitionTable<StateTy>: Sized
 where
     StateTy: Eq + Hash,
 {
@@ -22,31 +24,72 @@ where
 
     fn apply_transition_table(
         &self,
-        state: StateTy,
+        state: &StateTy,
         input: Self::InputType,
     ) -> Option<Self::OutputType>;
+
+    fn from_builder<Builder>(b: &Builder) -> Option<Self>
+    where
+        Builder: TransitionTableBuilder<
+            StateTy,
+            InputType = Self::InputType,
+            OutputType = Self::OutputType,
+        >;
 }
 
-/// The Transition table for a [`TuringMachine`](../trait.TuringMachine.html)
+/// The Transition table for a [`DeterministicTuringMachine`](../struct.TuringMachine.html)
 #[derive(Debug, Clone, Default)]
-pub struct DeterministicTransitionTable<T>
+pub struct DeterministicTransitionTable<StateTy>
 where
-    T: Debug + Clone + Default + Eq + Hash,
+    StateTy: Debug + Clone + Default + Eq + Hash,
 {
-    transitions: HashMap<T, HashMap<char, Action<T>>>,
+    transitions: HashMap<StateTy, HashMap<char, Action<StateTy>>>,
 }
 
-impl<T> TransitionTable<T> for DeterministicTransitionTable<T>
+impl<StateTy> TransitionTable<StateTy> for DeterministicTransitionTable<StateTy>
 where
-    T: Debug + Clone + Default + Eq + Hash,
+    StateTy: Debug + Clone + Default + Eq + Hash,
 {
     type InputType = char;
-    type OutputType = Action<T>;
+    type OutputType = Action<StateTy>;
 
-    fn apply_transition_table(&self, state: T, input_char: Self::InputType) -> Option<Action<T>> {
+    fn apply_transition_table(
+        &self,
+        state: &StateTy,
+        input_char: Self::InputType,
+    ) -> Option<Self::OutputType> {
         self.transitions
-            .get(&state)
+            .get(state)
             .and_then(|actions| actions.get(&input_char))
             .cloned()
+    }
+
+    fn from_builder<Builder>(b: &Builder) -> Option<Self>
+    where
+        Builder: TransitionTableBuilder<
+            StateTy,
+            InputType = Self::InputType,
+            OutputType = Self::OutputType,
+        >,
+    {
+        let mut transitions = HashMap::new();
+
+        let states_it = b.states();
+        for state in states_it {
+            let associated_transitions = b.get_state_transitions(&state);
+            let mut state_transitions = HashMap::new();
+            for (c, act) in associated_transitions {
+                if state_transitions.insert(c, act).is_some() {
+                    // We want no duplicates
+                    return None;
+                }
+            }
+            if transitions.insert(state, state_transitions).is_some() {
+                // Same with states
+                return None;
+            }
+        }
+
+        Some(DeterministicTransitionTable { transitions })
     }
 }

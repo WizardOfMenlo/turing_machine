@@ -1,10 +1,13 @@
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{self, Read};
-use turing_machine::machine_parser::{self, ParsingError};
+use turing_machine::builders::{TuringMachineBuilder, MachineRepresentationBuilder};
+use turing_machine::machine_parser::{self, ParsingError, MachineParser};
+use turing_machine::machine_representation::MachineRepresentation;
 use turing_machine::{
-    DeterministicTuringMachine, ExecutionResult, TuringMachine, TuringMachineBuilder,
-    TuringMachineExt, TuringMachineStatsExt,
+    deterministic_tm::DeterministicTuringMachine,
+    stats::{ExecutionResult, TuringMachineStatsExt},
+    TuringMachine,
 };
 
 #[derive(Debug)]
@@ -25,10 +28,13 @@ impl From<ParsingError> for ErrorType {
     }
 }
 
-fn run<T: TuringMachineExt>(
+fn run<T: TuringMachine>(
     repr_path: &str,
     tape_file: Option<&str>,
-) -> Result<ExecutionResult<T>, ErrorType> {
+) -> Result<ExecutionResult<T>, ErrorType>
+where
+    MachineParser: MachineRepresentationBuilder<<T as turing_machine::TuringMachine>::StateTy>,
+{
     // One of the two branches must necessarily be true
     let tape: Vec<char> = match tape_file {
         Some(p) => {
@@ -46,11 +52,14 @@ fn run<T: TuringMachineExt>(
     let repr_file = File::open(repr_path)?;
 
     // Parse the machine
-    let repr = machine_parser::parse(repr_file)?;
-    let builder = TuringMachineBuilder::new().representation(repr).tape(tape);
+    let repr_builder = machine_parser::parse(repr_file)?;
+    let repr = T::ReprTy::from_builder(&repr_builder)
+        .ok_or(ErrorType::ParsingError(ParsingError::StatesError))?;
+    let builder = TuringMachineBuilder::new().repr(repr).tape(tape);
 
     // Run to completion
-    let machine: T = builder.into();
+    let machine =
+        T::from_builder(builder).ok_or(ErrorType::ParsingError(ParsingError::StatesError))?;
     let mut machine = TuringMachineStatsExt::new(machine);
 
     Ok(machine.execute_and_get_result())
@@ -97,6 +106,7 @@ fn main() {
 
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
+
     let result = run::<DeterministicTuringMachine>(repr_path, matches.value_of("tapefile"));
     let exit_code = get_correct_exit_code(result);
 

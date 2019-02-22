@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::io::{self, BufRead, BufReader, Read};
 
-use crate::machine_representation::{State, TmRepresentation, TransitionTable};
+use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
+use crate::common::*;
 
 use lazy_static::lazy_static;
 
@@ -28,6 +29,145 @@ pub enum ParsingError {
 impl From<io::Error> for ParsingError {
     fn from(err: io::Error) -> Self {
         ParsingError::IOError(err)
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct MachineTableParser {
+    transitions: HashMap<String, Vec<(char, Action<String>)>>,
+}
+
+fn convert_to_char(s: &str) -> Option<char> {
+    if s.len() != 1 {
+        return None;
+    }
+    s.chars().next()
+}
+
+impl TransitionTableBuilder<String> for MachineTableParser {
+    type InputType = char;
+    type OutputType = Action<String>;
+
+    type ErrorType = ParsingError;
+
+    fn parse_line(&mut self, line: &str) -> Result<(), ParsingError> {
+        let tokens: Vec<&str> = line.split(' ').collect();
+        if tokens.len() != 5 {
+            return Err(ParsingError::TransitionTableError);
+        }
+
+        let start_state = tokens[0].trim();
+        let input_char = tokens[1].trim();
+        let next_state = tokens[2].trim();
+        let output_char = tokens[3].trim();
+        let motion_str = tokens[4].trim();
+
+        let action = Action::new(
+            next_state.to_string(),
+            convert_to_char(output_char).ok_or(ParsingError::TransitionTableError)?,
+            match motion_str {
+                "R" => Motion::Right,
+                "L" => Motion::Left,
+                "S" => Motion::Stay,
+                _ => return Err(ParsingError::TransitionTableError),
+            },
+        );
+
+        self.transitions
+            .entry(start_state.to_string())
+            .or_insert_with(Vec::new)
+            .push((
+                convert_to_char(input_char).ok_or(ParsingError::TransitionTableError)?,
+                action,
+            ));
+        Ok(())
+    }
+
+    fn states(&self) -> Vec<String> {
+        self.transitions.keys().cloned().collect()
+    }
+
+    fn get_state_transitions(&self, state: &String) -> Vec<(char, Action<String>)> {
+        self.transitions
+            .get(state)
+            .cloned()
+            .unwrap_or_else(Vec::new)
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct MachineParser {
+    starting_state: Option<String>,
+    accept_state: Option<String>,
+    reject_state: Option<String>,
+
+    states: HashMap<String, State>,
+    alphabet: HashSet<char>,
+    table_builder: MachineTableParser,
+}
+
+impl MachineParser {
+    fn has_accept_state(&self) -> bool {
+        self.accept_state.is_some()
+    }
+
+    fn has_reject_state(&self) -> bool {
+        self.reject_state.is_some()
+    }
+
+    fn alphabet_len(&self) -> usize {
+        self.alphabet.len()
+    }
+}
+
+impl MachineRepresentationBuilder<String> for MachineParser {
+    type TableBuilder = MachineTableParser;
+
+    fn add_state(&mut self, state: String, value: State) {
+        // TODO Check duplicates
+        self.states.insert(state.clone(), value.clone());
+        match value {
+            State::Accepting => self.accept_state = Some(state),
+            State::Rejecting => self.reject_state = Some(state),
+            _ => {}
+        }
+    }
+
+    fn add_starting_state(&mut self, state: String) {
+        // TODO check if already set
+        self.starting_state = Some(state);
+    }
+
+    fn add_alphabet_symbol(&mut self, symbol: char) {
+        // TODO check errors
+        self.alphabet.insert(symbol);
+    }
+
+    fn get_transition_builder(&mut self) -> &mut Self::TableBuilder {
+        &mut self.table_builder
+    }
+
+    fn states(&self) -> &HashMap<String, State> {
+        &self.states
+    }
+
+    fn starting_state(&self) -> &Option<String> {
+        &self.starting_state
+    }
+
+    fn accepting_state(&self) -> &Option<String> {
+        &self.accept_state
+    }
+    fn rejecting_state(&self) -> &Option<String> {
+        &self.reject_state
+    }
+
+    fn alphabet(&self) -> &HashSet<char> {
+        &self.alphabet
+    }
+
+    fn transition_table_builder(&self) -> &Self::TableBuilder {
+        &self.table_builder
     }
 }
 
@@ -62,7 +202,9 @@ lazy_static! {
 /// let res = parse(test_string.as_bytes().by_ref());
 /// assert!(res.is_err());
 /// ```
-pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError> {
+pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
+    let mut repr_builder = MachineParser::default();
+
     // Convert to a buffered reader
     let mut reader = BufReader::new(source);
     let mut current_line = String::new();
@@ -86,7 +228,6 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError
 
     // Parse each of the states
     let mut starting_state = None;
-    let mut states_map = HashMap::with_capacity(num_states);
     for _ in 0..num_states {
         current_line.clear();
         reader.read_line(&mut current_line)?;
@@ -108,17 +249,19 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError
             None => State::Neutral,
             _ => return Err(ParsingError::StatesError),
         };
-        states_map.insert(state_name.to_string(), acceptance);
+        repr_builder.add_state(state_name.to_string(), acceptance);
         starting_state.get_or_insert(state_name.to_string());
     }
 
     // If we haven't set the starting state, error out. Same if no accepting state or reject states
     if starting_state.is_none()
-        || !states_map.values().any(|ty| ty.is_rejecting())
-        || !states_map.values().any(|ty| ty.is_accepting())
+        || !repr_builder.has_reject_state()
+        || !repr_builder.has_accept_state()
     {
         return Err(ParsingError::StatesError);
     }
+
+    repr_builder.add_starting_state(starting_state.unwrap());
 
     // Clear the current line
     current_line.clear();
@@ -138,11 +281,8 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError
         .parse::<usize>()
         .map_err(|_| ParsingError::IntParsing)?;
 
-    // Gather alphabet
-    let mut alphabet = HashSet::with_capacity(num_alphabet_elements + 1);
-
     // Insert mandatory blank char
-    alphabet.insert('_');
+    repr_builder.add_alphabet_symbol('_');
 
     for token in split_it {
         let token = token.trim();
@@ -154,11 +294,11 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError
         if c == '_' {
             return Err(ParsingError::AlphabetError);
         }
-        alphabet.insert(c);
+        repr_builder.add_alphabet_symbol(c);
     }
 
     // Sanity checks
-    if alphabet.len() != num_alphabet_elements + 1 {
+    if repr_builder.alphabet_len() != num_alphabet_elements + 1 {
         return Err(ParsingError::AlphabetError);
     }
 
@@ -167,21 +307,44 @@ pub fn parse(source: impl Read) -> Result<TmRepresentation<String>, ParsingError
         lines.push(line?);
     }
 
-    Ok(TmRepresentation::new(
-        num_states,
-        starting_state.unwrap(),
-        states_map,
-        alphabet,
-        TransitionTable::build_from_iter(lines.into_iter())
-            .ok_or(ParsingError::TransitionTableError)?,
-    ))
+    repr_builder
+        .get_transition_builder()
+        .build_from_lines(lines.into_iter())?;
+
+    Ok(repr_builder)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::machine_representation::Motion;
-    use crate::machine_representation::State;
+    use crate::common::{Motion, State};
+
+    fn build_map(
+        transition_builder: &MachineTableParser,
+    ) -> &HashMap<String, Vec<(char, Action<String>)>> {
+        &transition_builder.transitions
+    }
+
+    fn are_vecs_equal(a: &[(char, Action<String>)], b: &[(char, Action<String>)]) -> bool {
+        if a.len() != b.len() {
+            return false;
+        }
+
+        for (c1, action1) in a {
+            let mut found = false;
+            for (c2, action2) in b {
+                if c1 == c2 && action1 == action2 {
+                    found = true;
+                    break;
+                }
+            }
+            if !found {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     #[test]
     fn valid_example1() {
@@ -202,7 +365,7 @@ mod tests {
             assert_eq!(states.get(*e).expect("Key should be present"), a);
         }
 
-        assert_eq!(representation.starting_state(), "s0");
+        assert_eq!(representation.starting_state().as_ref().unwrap(), "s0");
 
         let alphabet = representation.alphabet();
         assert_eq!(alphabet.len(), 3);
@@ -210,36 +373,31 @@ mod tests {
         assert!(alphabet.contains(&'a'));
         assert!(alphabet.contains(&'b'));
 
-        let transitions = representation.transition_table().transitions();
-        assert_eq!(transitions.len(), 2);
+        let transitions_builder = representation.transition_table_builder();
+        assert_eq!(transitions_builder.states().len(), 2);
+
+        let transitions = build_map(transitions_builder);
+
         let s0_actions = transitions.get("s0").expect("State not parsed");
         let s1_actions = transitions.get("s1").expect("State not parsed");
         assert_eq!(s0_actions.len(), 3);
         assert_eq!(s1_actions.len(), 2);
 
         let s0_actions_tests_cases = [
-            ('a', "s0", 'a', Motion::Right),
-            ('b', "s1", 'b', Motion::Right),
-            ('_', "s2", '_', Motion::Stay),
+            ('a', Action::new("s0".to_string(), 'a', Motion::Right)),
+            ('b', Action::new("s1".to_string(), 'b', Motion::Right)),
+            ('_', Action::new("s2".to_string(), '_', Motion::Stay)),
         ];
 
         let s1_actions_tests_cases = [
-            ('b', "s1", 'b', Motion::Right),
-            ('_', "s2", '_', Motion::Stay),
+            ('b', Action::new("s1".to_string(), 'b', Motion::Right)),
+            ('_', Action::new("s2".to_string(), '_', Motion::Stay)),
         ];
 
-        for (input_char, end_state, output_char, motion) in &s0_actions_tests_cases {
-            let action = s0_actions.get(input_char).expect("Input char not handled");
-            assert_eq!(action.next_state(), *end_state);
-            assert_eq!(action.tape_output(), output_char);
-            assert_eq!(action.motion(), motion);
-        }
-
-        for (input_char, end_state, output_char, motion) in &s1_actions_tests_cases {
-            let action = s1_actions.get(input_char).expect("Input char not handled");
-            assert_eq!(action.next_state(), *end_state);
-            assert_eq!(action.tape_output(), output_char);
-            assert_eq!(action.motion(), motion);
+        if !(are_vecs_equal(s0_actions, &s0_actions_tests_cases[..])
+            && are_vecs_equal(s1_actions, &s1_actions_tests_cases[..]))
+        {
+            panic!("Comparision failed");
         }
     }
 
@@ -262,7 +420,7 @@ mod tests {
             assert_eq!(states.get(*e).expect("Key should be present"), a);
         }
 
-        assert_eq!(representation.starting_state(), "q0");
+        assert_eq!(representation.starting_state().as_ref().unwrap(), "q0");
 
         let alphabet = representation.alphabet();
         assert_eq!(alphabet.len(), 3);
@@ -270,37 +428,31 @@ mod tests {
         assert!(alphabet.contains(&'a'));
         assert!(alphabet.contains(&'b'));
 
-        let transitions = representation.transition_table().transitions();
-        assert_eq!(transitions.len(), 2);
+        let transitions_builder = representation.transition_table_builder();
+        assert_eq!(transitions_builder.states().len(), 2);
+
+        let transitions = build_map(transitions_builder);
         let q0_actions = transitions.get("q0").expect("State not parsed");
         let q1_actions = transitions.get("q1").expect("State not parsed");
         assert_eq!(q0_actions.len(), 3);
         assert_eq!(q1_actions.len(), 3);
 
         let q0_actions_tests_cases = [
-            ('a', "q0", 'a', Motion::Right),
-            ('b', "q1", 'b', Motion::Right),
-            ('_', "qr", '_', Motion::Left),
+            ('a', Action::new("q0".to_string(), 'a', Motion::Right)),
+            ('b', Action::new("q1".to_string(), 'b', Motion::Right)),
+            ('_', Action::new("qr".to_string(), '_', Motion::Left)),
         ];
 
         let q1_actions_tests_cases = [
-            ('a', "qr", 'a', Motion::Left),
-            ('b', "qr", 'a', Motion::Left),
-            ('_', "qa", 'b', Motion::Left),
+            ('a', Action::new("qr".to_string(), 'a', Motion::Left)),
+            ('b', Action::new("qr".to_string(), 'a', Motion::Left)),
+            ('_', Action::new("qa".to_string(), 'b', Motion::Left)),
         ];
 
-        for (input_char, end_state, output_char, motion) in &q0_actions_tests_cases {
-            let action = q0_actions.get(input_char).expect("Input char not handled");
-            assert_eq!(action.next_state(), *end_state);
-            assert_eq!(action.tape_output(), output_char);
-            assert_eq!(action.motion(), motion);
-        }
-
-        for (input_char, end_state, output_char, motion) in &q1_actions_tests_cases {
-            let action = q1_actions.get(input_char).expect("Input char not handled");
-            assert_eq!(action.next_state(), *end_state);
-            assert_eq!(action.tape_output(), output_char);
-            assert_eq!(action.motion(), motion);
+        if !(are_vecs_equal(q0_actions, &q0_actions_tests_cases[..])
+            && are_vecs_equal(q1_actions, &q1_actions_tests_cases[..]))
+        {
+            panic!("Comparision failed");
         }
     }
 
@@ -309,9 +461,9 @@ mod tests {
         let test_string = "";
         let result = parse(test_string.as_bytes().by_ref());
         assert!(result.is_err());
-        if let ParsingError::StatesError = result.unwrap_err() {
-        } else {
-            panic!("Invalid Enum Variant");
+        match result {
+            Err(ParsingError::StatesError) => {}
+            _ => panic!("Invalid Enum Variant"),
         }
     }
 }
