@@ -63,7 +63,7 @@ impl TuringMachine for DeterministicTuringMachine {
         let starting_state = repr.starting_state().clone();
 
         Ok(DeterministicTuringMachine {
-            tape: tape,
+            tape,
             representation: repr,
             current_cell: 0,
             current_state: starting_state,

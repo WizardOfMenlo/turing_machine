@@ -16,33 +16,33 @@ use turing_machine::{
 
 #[derive(Debug)]
 enum ErrorType {
-    IOError(io::Error),
-    ParsingError(ParsingError),
-    ReprCreationError(RepresentationCreationError),
-    MachineCreationError(MachineCreationError),
+    IO(io::Error),
+    Parsing(ParsingError),
+    ReprCreation(RepresentationCreationError),
+    MachineCreation(MachineCreationError),
 }
 
 impl From<io::Error> for ErrorType {
     fn from(err: io::Error) -> Self {
-        ErrorType::IOError(err)
+        ErrorType::IO(err)
     }
 }
 
 impl From<ParsingError> for ErrorType {
     fn from(err: ParsingError) -> Self {
-        ErrorType::ParsingError(err)
+        ErrorType::Parsing(err)
     }
 }
 
 impl From<RepresentationCreationError> for ErrorType {
     fn from(err: RepresentationCreationError) -> Self {
-        ErrorType::ReprCreationError(err)
+        ErrorType::ReprCreation(err)
     }
 }
 
 impl From<MachineCreationError> for ErrorType {
     fn from(err: MachineCreationError) -> Self {
-        ErrorType::MachineCreationError(err)
+        ErrorType::MachineCreation(err)
     }
 }
 
@@ -88,10 +88,8 @@ fn get_correct_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, Error
             }
         }
         Err(ty) => match ty {
-            ErrorType::ParsingError(_)
-            | ErrorType::ReprCreationError(_)
-            | ErrorType::MachineCreationError(_) => 2,
-            ErrorType::IOError(_) => 3,
+            ErrorType::Parsing(_) | ErrorType::ReprCreation(_) | ErrorType::MachineCreation(_) => 2,
+            ErrorType::IO(_) => 3,
         },
     }
 }
