@@ -66,15 +66,22 @@ fn run(
     // Open the repr file
     let repr_file = File::open(repr_path)?;
 
-    // Parse the machine
+    // Parse to TM bc
     let repr_builder = machine_parser::parse(repr_file)?;
+
+    // Build the representation
     let repr = DeterministicMachineRepresentation::from_builder(&repr_builder)?;
+
+    // Adjoin with the tape
     let builder = TuringMachineBuilder::new().repr(repr).tape(tape);
 
-    // Run to completion
+    // Build the machine
     let machine = DeterministicTuringMachine::from_builder(builder)?;
+
+    // Decorate with stats extension
     let mut machine = TuringMachineStatsExt::new(machine);
 
+    // Run to completion
     Ok(machine.execute_and_get_result())
 }
 

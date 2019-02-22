@@ -4,6 +4,8 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::io::{BufRead, BufReader, Read};
 
+// TODO, would it generally be worth to replace at least some of these with structs? Or do we need the full generality of the problem?
+
 /// A trait to generally parse a transition table
 pub trait TransitionTableBuilder<StateTy>
 where

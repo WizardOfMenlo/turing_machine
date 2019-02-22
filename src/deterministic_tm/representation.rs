@@ -1,4 +1,4 @@
-use super::transition_table::{DeterministicTransitionTable, TableConstructionError};
+use super::transition_table::{DeterministicTransitionTable, TableCreationError};
 use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
 use crate::common::{Action, State};
 use crate::machine_representation::MachineRepresentation;
@@ -26,11 +26,11 @@ pub enum RepresentationCreationError {
     StartingStateNotSpecified,
     AcceptStateNotSpecified,
     RejectStateNotSpecified,
-    TableConstructionError(TableConstructionError),
+    TableConstructionError(TableCreationError),
 }
 
-impl From<TableConstructionError> for RepresentationCreationError {
-    fn from(t: TableConstructionError) -> Self {
+impl From<TableCreationError> for RepresentationCreationError {
+    fn from(t: TableCreationError) -> Self {
         RepresentationCreationError::TableConstructionError(t)
     }
 }
@@ -89,7 +89,7 @@ where
             .cloned()
             .ok_or(RepresentationCreationError::RejectStateNotSpecified)?;
 
-        Ok(DeterministicMachineRepresentation {
+        Ok(Self {
             states: b.states().clone(),
             starting_state,
             accepting_state,

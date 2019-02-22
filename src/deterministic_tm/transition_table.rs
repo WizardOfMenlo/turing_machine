@@ -16,8 +16,8 @@ where
 }
 
 #[derive(Debug)]
-pub enum TableConstructionError {
-    DuplicateInputError,
+pub enum TableCreationError {
+    DuplicateInput,
     DuplicateState,
 }
 
@@ -27,7 +27,7 @@ where
 {
     type InputTy = char;
     type OutputTy = Action<StateTy>;
-    type ErrorTy = TableConstructionError;
+    type ErrorTy = TableCreationError;
 
     fn apply_transition_table(
         &self,
@@ -54,12 +54,12 @@ where
             for (c, act) in associated_transitions {
                 if state_transitions.insert(c, act).is_some() {
                     // We want no duplicates
-                    return Err(TableConstructionError::DuplicateInputError);
+                    return Err(TableCreationError::DuplicateInput);
                 }
             }
             if transitions.insert(state, state_transitions).is_some() {
                 // Same with states
-                return Err(TableConstructionError::DuplicateState);
+                return Err(TableCreationError::DuplicateState);
             }
         }
 

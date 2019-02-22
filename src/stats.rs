@@ -22,7 +22,7 @@ pub struct TuringMachineStatsExt<T> {
 impl<T: TuringMachine> TuringMachineStatsExt<T> {
     /// Decorate an existing [`TuringMachine`](trait.TuringMachine.html) with the step-counter
     pub fn new(tm: T) -> Self {
-        TuringMachineStatsExt { tm, num_steps: 0 }
+        Self { tm, num_steps: 0 }
     }
 
     /// Return how many steps the machine has done so far

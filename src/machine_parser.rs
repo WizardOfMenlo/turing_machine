@@ -6,29 +6,32 @@ use crate::common::*;
 
 use lazy_static::lazy_static;
 
+
+// TODO, add recursive error messages, for fine grained configuration errors
+
 /// A Error type for errors returned by [`parse`](fn.parse.html).  
 /// Each variant expresses a particular error type and can be used to diagnose format mistakes
 #[derive(Debug)]
 pub enum ParsingError {
     /// The states parsing failed
-    StatesError,
+    States,
 
     /// An integer field could not be converted
     IntParsing,
 
     /// The alphabet is inconsistent
-    AlphabetError,
+    Alphabet,
 
     /// The transition table could not be parsed
-    TransitionTableError,
+    TransitionTable,
 
     /// Error encountered in interacting with `io`
-    IOError(io::Error),
+    IO(io::Error),
 }
 
 impl From<io::Error> for ParsingError {
     fn from(err: io::Error) -> Self {
-        ParsingError::IOError(err)
+        ParsingError::IO(err)
     }
 }
 
@@ -54,7 +57,7 @@ impl TransitionTableBuilder<String> for MachineTableParser {
     fn parse_line(&mut self, line: &str) -> Result<(), ParsingError> {
         let tokens: Vec<&str> = line.split(' ').collect();
         if tokens.len() != 5 {
-            return Err(ParsingError::TransitionTableError);
+            return Err(ParsingError::TransitionTable);
         }
 
         let start_state = tokens[0].trim();
@@ -65,12 +68,12 @@ impl TransitionTableBuilder<String> for MachineTableParser {
 
         let action = Action::new(
             next_state.to_string(),
-            convert_to_char(output_char).ok_or(ParsingError::TransitionTableError)?,
+            convert_to_char(output_char).ok_or(ParsingError::TransitionTable)?,
             match motion_str {
                 "R" => Motion::Right,
                 "L" => Motion::Left,
                 "S" => Motion::Stay,
-                _ => return Err(ParsingError::TransitionTableError),
+                _ => return Err(ParsingError::TransitionTable),
             },
         );
 
@@ -78,7 +81,7 @@ impl TransitionTableBuilder<String> for MachineTableParser {
             .entry(start_state.to_string())
             .or_insert_with(Vec::new)
             .push((
-                convert_to_char(input_char).ok_or(ParsingError::TransitionTableError)?,
+                convert_to_char(input_char).ok_or(ParsingError::TransitionTable)?,
                 action,
             ));
         Ok(())
@@ -221,13 +224,13 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
     // Read the states descr
     reader.read_line(&mut current_line)?;
     if !current_line.starts_with("states") {
-        return Err(ParsingError::StatesError);
+        return Err(ParsingError::States);
     }
 
     // Parse the states descr
     let states_token: Vec<&str> = current_line.split(' ').collect();
     if states_token.len() != 2 {
-        return Err(ParsingError::StatesError);
+        return Err(ParsingError::States);
     }
 
     let num_states = states_token[1]
@@ -244,19 +247,19 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         let tokens: Vec<&str> = current_line.split(' ').collect();
         let num_tokens = tokens.len();
         if num_tokens == 0 || num_tokens > 2 {
-            return Err(ParsingError::StatesError);
+            return Err(ParsingError::States);
         }
 
         let state_name = tokens[0].trim();
         if INVALID_STATE_NAMES.contains(&state_name) {
-            return Err(ParsingError::StatesError);
+            return Err(ParsingError::States);
         }
 
         let acceptance = match tokens.get(1).map(|s| s.trim()) {
             Some("+") => State::Accepting,
             Some("-") => State::Rejecting,
             None => State::Neutral,
-            _ => return Err(ParsingError::StatesError),
+            _ => return Err(ParsingError::States),
         };
         repr_builder.add_state(state_name.to_string(), acceptance)?;
         starting_state.get_or_insert(state_name.to_string());
@@ -267,7 +270,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         || !repr_builder.has_reject_state()
         || !repr_builder.has_accept_state()
     {
-        return Err(ParsingError::StatesError);
+        return Err(ParsingError::States);
     }
 
     repr_builder.add_starting_state(starting_state.unwrap())?;
@@ -278,14 +281,14 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
     // Read the alphabet descr
     reader.read_line(&mut current_line)?;
     if !current_line.starts_with("alphabet") {
-        return Err(ParsingError::AlphabetError);
+        return Err(ParsingError::Alphabet);
     }
 
     // Gather the number of elements
     let mut split_it = current_line.split(' ').skip(1);
     let num_alphabet_elements = split_it
         .next()
-        .ok_or(ParsingError::AlphabetError)?
+        .ok_or(ParsingError::Alphabet)?
         .trim()
         .parse::<usize>()
         .map_err(|_| ParsingError::IntParsing)?;
@@ -296,19 +299,19 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
     for token in split_it {
         let token = token.trim();
         if token.len() != 1 {
-            return Err(ParsingError::AlphabetError);
+            return Err(ParsingError::Alphabet);
         }
         let c = token.chars().next().unwrap();
         // _ is not valid by specs
         if c == '_' {
-            return Err(ParsingError::AlphabetError);
+            return Err(ParsingError::Alphabet);
         }
         repr_builder.add_alphabet_symbol(c)?;
     }
 
     // Sanity checks
     if repr_builder.alphabet_len() != num_alphabet_elements + 1 {
-        return Err(ParsingError::AlphabetError);
+        return Err(ParsingError::Alphabet);
     }
 
     let mut lines = Vec::new();
@@ -471,7 +474,7 @@ mod tests {
         let result = parse(test_string.as_bytes().by_ref());
         assert!(result.is_err());
         match result {
-            Err(ParsingError::StatesError) => {}
+            Err(ParsingError::States) => {}
             _ => panic!("Invalid Enum Variant"),
         }
     }
