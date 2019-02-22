@@ -1,9 +1,14 @@
+pub mod representation;
+pub mod transition_table;
+
 use crate::{
     common::{Action, Motion},
-    machine_representation::{DeterministicMachineRepresentation, MachineRepresentation},
+    machine_representation::MachineRepresentation,
     transition_table::TransitionTable,
     TuringMachine, TuringMachineBuilder,
 };
+
+use representation::DeterministicMachineRepresentation;
 
 use std::{fmt, iter};
 
@@ -35,17 +40,29 @@ impl DeterministicTuringMachine {
     }
 }
 
+#[derive(Debug)]
+pub enum MachineCreationError {
+    TapeAlphabetMismatch,
+}
+
 impl TuringMachine for DeterministicTuringMachine {
     type Tape = Vec<char>;
     type StateTy = String;
     type ReprTy = DeterministicMachineRepresentation<String>;
+    type ErrorTy = MachineCreationError;
 
-    fn from_builder(repr: TuringMachineBuilder<Self::StateTy, Self::ReprTy>) -> Option<Self> {
-        let (tape, repr) = repr.validate()?.decompose();
+    fn from_builder(
+        builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>,
+    ) -> Result<Self, Self::ErrorTy> {
+        // TODO proper validation
+        let (tape, repr) = builder
+            .validate()
+            .ok_or(MachineCreationError::TapeAlphabetMismatch)?
+            .decompose();
 
         let starting_state = repr.starting_state().clone();
 
-        Some(DeterministicTuringMachine {
+        Ok(DeterministicTuringMachine {
             tape: tape,
             representation: repr,
             current_cell: 0,

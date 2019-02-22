@@ -18,6 +18,9 @@ pub trait TuringMachine: Sized {
     type StateTy: Hash + Eq;
     type ReprTy: MachineRepresentation<Self::StateTy>;
 
+    /// The error raised on failed construction
+    type ErrorTy;
+
     /// Takes a single step
     fn step(&mut self);
 
@@ -39,5 +42,7 @@ pub trait TuringMachine: Sized {
         self.is_accepting()
     }
 
-    fn from_builder(builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>) -> Option<Self>;
+    fn from_builder(
+        builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>,
+    ) -> Result<Self, Self::ErrorTy>;
 }

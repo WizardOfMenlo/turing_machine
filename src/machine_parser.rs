@@ -32,6 +32,7 @@ impl From<io::Error> for ParsingError {
     }
 }
 
+/// The most general transition function I could think of. Think of this as the "bytecode" of the transition functions, each level up the hierarchy refining it and checking it
 #[derive(Default, Debug)]
 pub struct MachineTableParser {
     transitions: HashMap<String, Vec<(char, Action<String>)>>,
@@ -45,8 +46,8 @@ fn convert_to_char(s: &str) -> Option<char> {
 }
 
 impl TransitionTableBuilder<String> for MachineTableParser {
-    type InputType = char;
-    type OutputType = Action<String>;
+    type InputTy = char;
+    type OutputTy = Action<String>;
 
     type ErrorType = ParsingError;
 
@@ -95,6 +96,7 @@ impl TransitionTableBuilder<String> for MachineTableParser {
     }
 }
 
+/// The most general form of the element of the TM, to be successively parsed upwards
 #[derive(Default, Debug)]
 pub struct MachineParser {
     starting_state: Option<String>,
@@ -121,9 +123,13 @@ impl MachineParser {
 }
 
 impl MachineRepresentationBuilder<String> for MachineParser {
+    type InputTy = char;
+    type OutputTy = Action<String>;
     type TableBuilder = MachineTableParser;
 
-    fn add_state(&mut self, state: String, value: State) {
+    type ErrorTy = ParsingError;
+
+    fn add_state(&mut self, state: String, value: State) -> Result<(), ParsingError> {
         // TODO Check duplicates
         self.states.insert(state.clone(), value.clone());
         match value {
@@ -131,16 +137,19 @@ impl MachineRepresentationBuilder<String> for MachineParser {
             State::Rejecting => self.reject_state = Some(state),
             _ => {}
         }
+        Ok(())
     }
 
-    fn add_starting_state(&mut self, state: String) {
+    fn add_starting_state(&mut self, state: String) -> Result<(), ParsingError> {
         // TODO check if already set
         self.starting_state = Some(state);
+        Ok(())
     }
 
-    fn add_alphabet_symbol(&mut self, symbol: char) {
+    fn add_alphabet_symbol(&mut self, symbol: char) -> Result<(), ParsingError> {
         // TODO check errors
         self.alphabet.insert(symbol);
+        Ok(())
     }
 
     fn get_transition_builder(&mut self) -> &mut Self::TableBuilder {
@@ -249,7 +258,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
             None => State::Neutral,
             _ => return Err(ParsingError::StatesError),
         };
-        repr_builder.add_state(state_name.to_string(), acceptance);
+        repr_builder.add_state(state_name.to_string(), acceptance)?;
         starting_state.get_or_insert(state_name.to_string());
     }
 
@@ -261,7 +270,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         return Err(ParsingError::StatesError);
     }
 
-    repr_builder.add_starting_state(starting_state.unwrap());
+    repr_builder.add_starting_state(starting_state.unwrap())?;
 
     // Clear the current line
     current_line.clear();
@@ -282,7 +291,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         .map_err(|_| ParsingError::IntParsing)?;
 
     // Insert mandatory blank char
-    repr_builder.add_alphabet_symbol('_');
+    repr_builder.add_alphabet_symbol('_')?;
 
     for token in split_it {
         let token = token.trim();
@@ -294,7 +303,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         if c == '_' {
             return Err(ParsingError::AlphabetError);
         }
-        repr_builder.add_alphabet_symbol(c);
+        repr_builder.add_alphabet_symbol(c)?;
     }
 
     // Sanity checks

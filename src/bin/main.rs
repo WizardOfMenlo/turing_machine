@@ -1,11 +1,15 @@
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{self, Read};
-use turing_machine::builders::{TuringMachineBuilder, MachineRepresentationBuilder};
-use turing_machine::machine_parser::{self, ParsingError, MachineParser};
+use turing_machine::builders::TuringMachineBuilder;
+use turing_machine::machine_parser::{self, ParsingError};
 use turing_machine::machine_representation::MachineRepresentation;
 use turing_machine::{
-    deterministic_tm::DeterministicTuringMachine,
+    deterministic_tm::{
+        representation::DeterministicMachineRepresentation,
+        representation::RepresentationCreationError, DeterministicTuringMachine,
+        MachineCreationError,
+    },
     stats::{ExecutionResult, TuringMachineStatsExt},
     TuringMachine,
 };
@@ -14,6 +18,8 @@ use turing_machine::{
 enum ErrorType {
     IOError(io::Error),
     ParsingError(ParsingError),
+    ReprCreationError(RepresentationCreationError),
+    MachineCreationError(MachineCreationError),
 }
 
 impl From<io::Error> for ErrorType {
@@ -28,13 +34,22 @@ impl From<ParsingError> for ErrorType {
     }
 }
 
-fn run<T: TuringMachine>(
+impl From<RepresentationCreationError> for ErrorType {
+    fn from(err: RepresentationCreationError) -> Self {
+        ErrorType::ReprCreationError(err)
+    }
+}
+
+impl From<MachineCreationError> for ErrorType {
+    fn from(err: MachineCreationError) -> Self {
+        ErrorType::MachineCreationError(err)
+    }
+}
+
+fn run(
     repr_path: &str,
     tape_file: Option<&str>,
-) -> Result<ExecutionResult<T>, ErrorType>
-where
-    MachineParser: MachineRepresentationBuilder<<T as turing_machine::TuringMachine>::StateTy>,
-{
+) -> Result<ExecutionResult<impl TuringMachine>, ErrorType> {
     // One of the two branches must necessarily be true
     let tape: Vec<char> = match tape_file {
         Some(p) => {
@@ -53,13 +68,11 @@ where
 
     // Parse the machine
     let repr_builder = machine_parser::parse(repr_file)?;
-    let repr = T::ReprTy::from_builder(&repr_builder)
-        .ok_or(ErrorType::ParsingError(ParsingError::StatesError))?;
+    let repr = DeterministicMachineRepresentation::from_builder(&repr_builder)?;
     let builder = TuringMachineBuilder::new().repr(repr).tape(tape);
 
     // Run to completion
-    let machine =
-        T::from_builder(builder).ok_or(ErrorType::ParsingError(ParsingError::StatesError))?;
+    let machine = DeterministicTuringMachine::from_builder(builder)?;
     let mut machine = TuringMachineStatsExt::new(machine);
 
     Ok(machine.execute_and_get_result())
@@ -75,7 +88,9 @@ fn get_correct_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, Error
             }
         }
         Err(ty) => match ty {
-            ErrorType::ParsingError(_) => 2,
+            ErrorType::ParsingError(_)
+            | ErrorType::ReprCreationError(_)
+            | ErrorType::MachineCreationError(_) => 2,
             ErrorType::IOError(_) => 3,
         },
     }
@@ -107,7 +122,7 @@ fn main() {
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
 
-    let result = run::<DeterministicTuringMachine>(repr_path, matches.value_of("tapefile"));
+    let result = run(repr_path, matches.value_of("tapefile"));
     let exit_code = get_correct_exit_code(result);
 
     match exit_code {

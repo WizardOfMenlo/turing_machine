@@ -42,12 +42,17 @@ impl<T: TuringMachine> TuringMachineStatsExt<T> {
 }
 
 impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {
+    // Just forward everything to the corresponding operation
+
     type Tape = T::Tape;
     type StateTy = T::StateTy;
     type ReprTy = T::ReprTy;
+    type ErrorTy = T::ErrorTy;
 
-    fn from_builder(builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>) -> Option<Self> {
-        Some(Self::new(T::from_builder(builder)?))
+    fn from_builder(
+        builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>,
+    ) -> Result<Self, Self::ErrorTy> {
+        Ok(Self::new(T::from_builder(builder)?))
     }
 
     fn step(&mut self) {

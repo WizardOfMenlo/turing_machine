@@ -9,12 +9,11 @@ pub trait TransitionTableBuilder<StateTy>
 where
     StateTy: Eq + Hash,
 {
-    type InputType;
-    type OutputType;
+    type InputTy;
+    type OutputTy;
 
     type ErrorType: From<std::io::Error>;
 
-    // TODO, use a more descriptive error type
     fn parse_line(&mut self, line: &str) -> Result<(), Self::ErrorType>;
     fn build_from_lines(
         &mut self,
@@ -34,18 +33,23 @@ where
     fn states(&self) -> Vec<StateTy>;
 
     /// Given a current state, what is the transitions that we can take?
-    fn get_state_transitions(&self, state: &StateTy) -> Vec<(Self::InputType, Self::OutputType)>;
+    fn get_state_transitions(&self, state: &StateTy) -> Vec<(Self::InputTy, Self::OutputTy)>;
 }
 
 pub trait MachineRepresentationBuilder<StateTy>
 where
     StateTy: Eq + Hash,
 {
+    type InputTy;
+    type OutputTy;
+
     type TableBuilder: TransitionTableBuilder<StateTy>;
 
-    fn add_state(&mut self, state: StateTy, value: State);
-    fn add_starting_state(&mut self, state: StateTy);
-    fn add_alphabet_symbol(&mut self, symbol: char);
+    type ErrorTy;
+
+    fn add_state(&mut self, state: StateTy, value: State) -> Result<(), Self::ErrorTy>;
+    fn add_starting_state(&mut self, state: StateTy) -> Result<(), Self::ErrorTy>;
+    fn add_alphabet_symbol(&mut self, symbol: char) -> Result<(), Self::ErrorTy>;
     fn get_transition_builder(&mut self) -> &mut Self::TableBuilder;
 
     /// Get the list of states in the representation
