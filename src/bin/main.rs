@@ -1,34 +1,55 @@
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{self, Read};
+use turing_machine::builders::TuringMachineBuilder;
 use turing_machine::machine_parser::{self, ParsingError};
+use turing_machine::machine_representation::MachineRepresentation;
 use turing_machine::{
-    DeterministicTuringMachine, ExecutionResult, TuringMachine, TuringMachineBuilder,
-    TuringMachineExt, TuringMachineStatsExt,
+    deterministic_tm::{
+        representation::DeterministicMachineRepresentation,
+        representation::RepresentationCreationError, DeterministicTuringMachine,
+        MachineCreationError,
+    },
+    stats::{ExecutionResult, TuringMachineStatsExt},
+    TuringMachine,
 };
 
 #[derive(Debug)]
 enum ErrorType {
-    IOError(io::Error),
-    ParsingError(ParsingError),
+    IO(io::Error),
+    Parsing(ParsingError),
+    ReprCreation(RepresentationCreationError),
+    MachineCreation(MachineCreationError),
 }
 
 impl From<io::Error> for ErrorType {
     fn from(err: io::Error) -> Self {
-        ErrorType::IOError(err)
+        ErrorType::IO(err)
     }
 }
 
 impl From<ParsingError> for ErrorType {
     fn from(err: ParsingError) -> Self {
-        ErrorType::ParsingError(err)
+        ErrorType::Parsing(err)
     }
 }
 
-fn run<T: TuringMachineExt>(
+impl From<RepresentationCreationError> for ErrorType {
+    fn from(err: RepresentationCreationError) -> Self {
+        ErrorType::ReprCreation(err)
+    }
+}
+
+impl From<MachineCreationError> for ErrorType {
+    fn from(err: MachineCreationError) -> Self {
+        ErrorType::MachineCreation(err)
+    }
+}
+
+fn run(
     repr_path: &str,
     tape_file: Option<&str>,
-) -> Result<ExecutionResult<T>, ErrorType> {
+) -> Result<ExecutionResult<impl TuringMachine>, ErrorType> {
     // One of the two branches must necessarily be true
     let tape: Vec<char> = match tape_file {
         Some(p) => {
@@ -45,20 +66,30 @@ fn run<T: TuringMachineExt>(
     // Open the repr file
     let repr_file = File::open(repr_path)?;
 
-    // Parse the machine
-    let repr = machine_parser::parse(repr_file)?;
-    let builder = TuringMachineBuilder::new().representation(repr).tape(tape);
+    // Parse to TM bc
+    let repr_builder = machine_parser::parse(repr_file)?;
 
-    // Run to completion
-    let machine: T = builder.into();
+    // Build the representation
+    let repr = DeterministicMachineRepresentation::from_builder(&repr_builder)?;
+
+    // Adjoin with the tape
+    let builder = TuringMachineBuilder::new().repr(repr).tape(tape);
+
+    // Build the machine
+    let machine = DeterministicTuringMachine::from_builder(builder)?;
+
+    // Decorate with stats extension
     let mut machine = TuringMachineStatsExt::new(machine);
 
+    // Run to completion
     Ok(machine.execute_and_get_result())
 }
 
-fn get_correct_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, ErrorType>) -> i32 {
+fn handle_and_get_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, ErrorType>) -> i32 {
     match res {
         Ok(exe) => {
+            println!(" Machine ran for {} steps", exe.num_steps);
+            println!(" Final configuration: {:?}", exe.tape);
             if exe.accepting {
                 0
             } else {
@@ -66,8 +97,11 @@ fn get_correct_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, Error
             }
         }
         Err(ty) => match ty {
-            ErrorType::ParsingError(_) => 2,
-            ErrorType::IOError(_) => 3,
+            ErrorType::Parsing(_) | ErrorType::ReprCreation(_) | ErrorType::MachineCreation(_) => {
+                println!(" {:?}", ty);
+                2
+            }
+            ErrorType::IO(_) => 3,
         },
     }
 }
@@ -97,8 +131,9 @@ fn main() {
 
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
-    let result = run::<DeterministicTuringMachine>(repr_path, matches.value_of("tapefile"));
-    let exit_code = get_correct_exit_code(result);
+
+    let result = run(repr_path, matches.value_of("tapefile"));
+    let exit_code = handle_and_get_exit_code(result);
 
     match exit_code {
         0 => println!("Accepted"),
