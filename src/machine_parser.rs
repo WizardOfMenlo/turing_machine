@@ -6,7 +6,6 @@ use crate::common::*;
 
 use lazy_static::lazy_static;
 
-
 // TODO, add recursive error messages, for fine grained configuration errors
 
 /// A Error type for errors returned by [`parse`](fn.parse.html).  
@@ -14,24 +13,77 @@ use lazy_static::lazy_static;
 #[derive(Debug)]
 pub enum ParsingError {
     /// The states parsing failed
-    States,
-
-    /// An integer field could not be converted
-    IntParsing,
+    States(StateError),
 
     /// The alphabet is inconsistent
-    Alphabet,
+    Alphabet(AlphabetError),
 
     /// The transition table could not be parsed
-    TransitionTable,
+    TransitionTable(TransitionTableError),
 
     /// Error encountered in interacting with `io`
+    IO(io::Error),
+}
+
+#[derive(Debug)]
+pub enum StateError {
+    MissingStateHeader,
+    InvalidStateHeader,
+    HeaderIntParsing,
+    InvalidStateLine(String),
+    InvalidStateName(String),
+    InvalidStateSymbol(String),
+    MandatoryStatesNotSet,
+}
+
+#[derive(Debug)]
+pub enum AlphabetError {
+    MissingAlphabetHeader,
+    InvalidAlphabetHeader,
+    InvalidBlankSymbol,
+    HeaderIntParsing,
+    TokenNotAChar(String),
+    InvalidNumberOfElements(usize),
+}
+
+#[derive(Debug)]
+pub enum TransitionTableError {
+    InvalidNumberOfTokens(usize),
+    TokenNotAChar(String),
+    InvalidMotion(String),
     IO(io::Error),
 }
 
 impl From<io::Error> for ParsingError {
     fn from(err: io::Error) -> Self {
         ParsingError::IO(err)
+    }
+}
+
+impl From<StateError> for ParsingError {
+    fn from(err: StateError) -> Self {
+        ParsingError::States(err)
+    }
+}
+
+impl From<AlphabetError> for ParsingError {
+    fn from(err: AlphabetError) -> Self {
+        ParsingError::Alphabet(err)
+    }
+}
+
+impl From<TransitionTableError> for ParsingError {
+    fn from(err: TransitionTableError) -> Self {
+        match err {
+            TransitionTableError::IO(err) => ParsingError::IO(err),
+            _ => ParsingError::TransitionTable(err),
+        }
+    }
+}
+
+impl From<io::Error> for TransitionTableError {
+    fn from(err: io::Error) -> Self {
+        TransitionTableError::IO(err)
     }
 }
 
@@ -52,12 +104,13 @@ impl TransitionTableBuilder<String> for MachineTableParser {
     type InputTy = char;
     type OutputTy = Action<String>;
 
-    type ErrorType = ParsingError;
+    type ErrorType = TransitionTableError;
 
-    fn parse_line(&mut self, line: &str) -> Result<(), ParsingError> {
+    fn parse_line(&mut self, line: &str) -> Result<(), TransitionTableError> {
         let tokens: Vec<&str> = line.split(' ').collect();
-        if tokens.len() != 5 {
-            return Err(ParsingError::TransitionTable);
+        let num_tokens = tokens.len();
+        if num_tokens != 5 {
+            return Err(TransitionTableError::InvalidNumberOfTokens(num_tokens));
         }
 
         let start_state = tokens[0].trim();
@@ -68,12 +121,13 @@ impl TransitionTableBuilder<String> for MachineTableParser {
 
         let action = Action::new(
             next_state.to_string(),
-            convert_to_char(output_char).ok_or(ParsingError::TransitionTable)?,
+            convert_to_char(output_char)
+                .ok_or_else(|| TransitionTableError::TokenNotAChar(output_char.to_string()))?,
             match motion_str {
                 "R" => Motion::Right,
                 "L" => Motion::Left,
                 "S" => Motion::Stay,
-                _ => return Err(ParsingError::TransitionTable),
+                _ => return Err(TransitionTableError::InvalidMotion(motion_str.to_string())),
             },
         );
 
@@ -81,7 +135,8 @@ impl TransitionTableBuilder<String> for MachineTableParser {
             .entry(start_state.to_string())
             .or_insert_with(Vec::new)
             .push((
-                convert_to_char(input_char).ok_or(ParsingError::TransitionTable)?,
+                convert_to_char(input_char)
+                    .ok_or_else(|| TransitionTableError::TokenNotAChar(input_char.to_string()))?,
                 action,
             ));
         Ok(())
@@ -224,19 +279,19 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
     // Read the states descr
     reader.read_line(&mut current_line)?;
     if !current_line.starts_with("states") {
-        return Err(ParsingError::States);
+        return Err(ParsingError::States(StateError::MissingStateHeader));
     }
 
     // Parse the states descr
     let states_token: Vec<&str> = current_line.split(' ').collect();
     if states_token.len() != 2 {
-        return Err(ParsingError::States);
+        return Err(ParsingError::States(StateError::InvalidStateHeader));
     }
 
     let num_states = states_token[1]
         .trim()
         .parse::<usize>()
-        .map_err(|_| ParsingError::IntParsing)?;
+        .map_err(|_| StateError::HeaderIntParsing)?;
 
     // Parse each of the states
     let mut starting_state = None;
@@ -247,19 +302,27 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         let tokens: Vec<&str> = current_line.split(' ').collect();
         let num_tokens = tokens.len();
         if num_tokens == 0 || num_tokens > 2 {
-            return Err(ParsingError::States);
+            return Err(ParsingError::States(StateError::InvalidStateLine(
+                current_line,
+            )));
         }
 
         let state_name = tokens[0].trim();
         if INVALID_STATE_NAMES.contains(&state_name) {
-            return Err(ParsingError::States);
+            return Err(ParsingError::States(StateError::InvalidStateName(
+                state_name.to_string(),
+            )));
         }
 
         let acceptance = match tokens.get(1).map(|s| s.trim()) {
             Some("+") => State::Accepting,
             Some("-") => State::Rejecting,
             None => State::Neutral,
-            _ => return Err(ParsingError::States),
+            Some(symb) => {
+                return Err(ParsingError::States(StateError::InvalidStateSymbol(
+                    symb.to_string(),
+                )));
+            }
         };
         repr_builder.add_state(state_name.to_string(), acceptance)?;
         starting_state.get_or_insert(state_name.to_string());
@@ -270,7 +333,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         || !repr_builder.has_reject_state()
         || !repr_builder.has_accept_state()
     {
-        return Err(ParsingError::States);
+        return Err(ParsingError::States(StateError::MandatoryStatesNotSet));
     }
 
     repr_builder.add_starting_state(starting_state.unwrap())?;
@@ -281,17 +344,17 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
     // Read the alphabet descr
     reader.read_line(&mut current_line)?;
     if !current_line.starts_with("alphabet") {
-        return Err(ParsingError::Alphabet);
+        return Err(ParsingError::Alphabet(AlphabetError::MissingAlphabetHeader));
     }
 
     // Gather the number of elements
     let mut split_it = current_line.split(' ').skip(1);
     let num_alphabet_elements = split_it
         .next()
-        .ok_or(ParsingError::Alphabet)?
+        .ok_or(AlphabetError::InvalidAlphabetHeader)?
         .trim()
         .parse::<usize>()
-        .map_err(|_| ParsingError::IntParsing)?;
+        .map_err(|_| AlphabetError::HeaderIntParsing)?;
 
     // Insert mandatory blank char
     repr_builder.add_alphabet_symbol('_')?;
@@ -299,19 +362,24 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
     for token in split_it {
         let token = token.trim();
         if token.len() != 1 {
-            return Err(ParsingError::Alphabet);
+            return Err(ParsingError::Alphabet(AlphabetError::TokenNotAChar(
+                token.to_string(),
+            )));
         }
         let c = token.chars().next().unwrap();
         // _ is not valid by specs
         if c == '_' {
-            return Err(ParsingError::Alphabet);
+            return Err(ParsingError::Alphabet(AlphabetError::InvalidBlankSymbol));
         }
         repr_builder.add_alphabet_symbol(c)?;
     }
 
     // Sanity checks
-    if repr_builder.alphabet_len() != num_alphabet_elements + 1 {
-        return Err(ParsingError::Alphabet);
+    let num_elements = repr_builder.alphabet_len();
+    if num_elements != num_alphabet_elements + 1 {
+        return Err(ParsingError::Alphabet(
+            AlphabetError::InvalidNumberOfElements(num_elements),
+        ));
     }
 
     let mut lines = Vec::new();
@@ -474,7 +542,7 @@ mod tests {
         let result = parse(test_string.as_bytes().by_ref());
         assert!(result.is_err());
         match result {
-            Err(ParsingError::States) => {}
+            Err(ParsingError::States(StateError::MissingStateHeader)) => {}
             _ => panic!("Invalid Enum Variant"),
         }
     }
