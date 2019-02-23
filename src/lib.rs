@@ -8,13 +8,14 @@ pub mod transition_table;
 
 use crate::builders::TuringMachineBuilder;
 use crate::machine_representation::MachineRepresentation;
+use std::fmt::Debug;
 use std::hash::Hash;
 
 /// A trait encapsulating the behavior of a general TM
 /// Should be general enough to account for [`DeterministicTuringMachine`](struct.DeterministicTuringMachine.html), k-tape machines, NDTMs and so on
 pub trait TuringMachine: Sized {
     /// Associated tape
-    type Tape: Clone;
+    type Tape: Clone + Debug;
     type StateTy: Hash + Eq;
     type ReprTy: MachineRepresentation<Self::StateTy>;
 

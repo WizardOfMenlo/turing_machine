@@ -85,9 +85,11 @@ fn run(
     Ok(machine.execute_and_get_result())
 }
 
-fn get_correct_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, ErrorType>) -> i32 {
+fn handle_and_get_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, ErrorType>) -> i32 {
     match res {
         Ok(exe) => {
+            println!(" Machine ran for {} steps", exe.num_steps);
+            println!(" Final configuration: {:?}", exe.tape);
             if exe.accepting {
                 0
             } else {
@@ -128,7 +130,7 @@ fn main() {
     let repr_path = matches.value_of("repr").unwrap();
 
     let result = run(repr_path, matches.value_of("tapefile"));
-    let exit_code = get_correct_exit_code(result);
+    let exit_code = handle_and_get_exit_code(result);
 
     match exit_code {
         0 => println!("Accepted"),
