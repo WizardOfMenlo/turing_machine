@@ -8,8 +8,6 @@ use crate::{
     TuringMachine, TuringMachineBuilder,
 };
 
-// TODO: Maybe do away with State completely?
-
 use representation::DeterministicMachineRepresentation;
 
 use std::{fmt, iter};

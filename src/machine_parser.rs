@@ -6,8 +6,6 @@ use crate::common::*;
 
 use lazy_static::lazy_static;
 
-// TODO, add recursive error messages, for fine grained configuration errors
-
 /// A Error type for errors returned by [`parse`](fn.parse.html).  
 /// Each variant expresses a particular error type and can be used to diagnose format mistakes
 #[derive(Debug)]
