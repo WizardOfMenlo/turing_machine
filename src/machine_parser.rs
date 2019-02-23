@@ -30,6 +30,10 @@ pub enum StateError {
     MissingStateHeader,
     InvalidStateHeader,
     HeaderIntParsing,
+    DuplicateState(String),
+    DuplicateAcceptingState,
+    DuplicateRejectingState,
+    StartingStateSetTwice,
     InvalidStateLine(String),
     InvalidStateName(String),
     InvalidStateSymbol(String),
@@ -42,6 +46,7 @@ pub enum AlphabetError {
     InvalidAlphabetHeader,
     InvalidBlankSymbol,
     HeaderIntParsing,
+    DuplicateSymbol(char),
     TokenNotAChar(String),
     InvalidNumberOfElements(usize),
 }
@@ -188,8 +193,22 @@ impl MachineRepresentationBuilder<String> for MachineParser {
     type ErrorTy = ParsingError;
 
     fn add_state(&mut self, state: String, value: State) -> Result<(), ParsingError> {
-        // TODO Check duplicates
-        self.states.insert(state.clone(), value.clone());
+        if let Some(accept_state) = &self.accept_state {
+            if accept_state == &state || value.is_accepting() {
+                return Err(ParsingError::States(StateError::DuplicateAcceptingState));
+            }
+        }
+
+        if let Some(reject_state) = &self.reject_state {
+            if reject_state == &state || value.is_rejecting() {
+                return Err(ParsingError::States(StateError::DuplicateRejectingState));
+            }
+        }
+
+        if self.states.insert(state.clone(), value.clone()).is_some() {
+            return Err(ParsingError::States(StateError::DuplicateState(state)));
+        }
+
         match value {
             State::Accepting => self.accept_state = Some(state),
             State::Rejecting => self.reject_state = Some(state),
@@ -199,14 +218,19 @@ impl MachineRepresentationBuilder<String> for MachineParser {
     }
 
     fn add_starting_state(&mut self, state: String) -> Result<(), ParsingError> {
-        // TODO check if already set
+        if self.starting_state.is_some() {
+            return Err(ParsingError::States(StateError::StartingStateSetTwice));
+        }
         self.starting_state = Some(state);
         Ok(())
     }
 
     fn add_alphabet_symbol(&mut self, symbol: char) -> Result<(), ParsingError> {
-        // TODO check errors
-        self.alphabet.insert(symbol);
+        if !self.alphabet.insert(symbol) {
+            return Err(ParsingError::Alphabet(AlphabetError::DuplicateSymbol(
+                symbol,
+            )));
+        }
         Ok(())
     }
 
