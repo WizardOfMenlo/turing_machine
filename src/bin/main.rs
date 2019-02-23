@@ -97,7 +97,10 @@ fn handle_and_get_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, Er
             }
         }
         Err(ty) => match ty {
-            ErrorType::Parsing(_) | ErrorType::ReprCreation(_) | ErrorType::MachineCreation(_) => 2,
+            ErrorType::Parsing(_) | ErrorType::ReprCreation(_) | ErrorType::MachineCreation(_) => {
+                println!(" {:?}", ty);
+                2
+            }
             ErrorType::IO(_) => 3,
         },
     }

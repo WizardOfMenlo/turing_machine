@@ -1,9 +1,9 @@
 use super::transition_table::{DeterministicTransitionTable, TableCreationError};
 use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
-use crate::common::{Action, State};
+use crate::common::Action;
 use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -13,7 +13,7 @@ pub struct DeterministicMachineRepresentation<StateTy>
 where
     StateTy: Debug + Hash + Eq + Clone + Default,
 {
-    states: HashMap<StateTy, State>,
+    states: HashSet<StateTy>,
     starting_state: StateTy,
     accepting_state: StateTy,
     rejecting_state: StateTy,
@@ -44,7 +44,7 @@ where
     type TableTy = DeterministicTransitionTable<StateTy>;
     type ErrorTy = RepresentationCreationError;
 
-    fn states(&self) -> &HashMap<StateTy, State> {
+    fn states(&self) -> &HashSet<StateTy> {
         &self.states
     }
 

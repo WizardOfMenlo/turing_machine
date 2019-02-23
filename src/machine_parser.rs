@@ -166,7 +166,7 @@ pub struct MachineParser {
     accept_state: Option<String>,
     reject_state: Option<String>,
 
-    states: HashMap<String, State>,
+    states: HashSet<String>,
     alphabet: HashSet<char>,
     table_builder: MachineTableParser,
 }
@@ -205,7 +205,7 @@ impl MachineRepresentationBuilder<String> for MachineParser {
             }
         }
 
-        if self.states.insert(state.clone(), value.clone()).is_some() {
+        if !self.states.insert(state.clone()) {
             return Err(ParsingError::States(StateError::DuplicateState(state)));
         }
 
@@ -238,7 +238,7 @@ impl MachineRepresentationBuilder<String> for MachineParser {
         &mut self.table_builder
     }
 
-    fn states(&self) -> &HashMap<String, State> {
+    fn states(&self) -> &HashSet<String> {
         &self.states
     }
 
@@ -421,7 +421,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::common::{Motion, State};
+    use crate::common::Motion;
 
     fn build_map(
         transition_builder: &MachineTableParser,
@@ -459,14 +459,14 @@ mod tests {
         let states = representation.states();
         assert_eq!(states.len(), 4);
 
-        let states_test_cases = [
-            ("s0", State::Neutral),
-            ("s1", State::Neutral),
-            ("s2", State::Accepting),
-            ("qr", State::Rejecting),
-        ];
-        for (e, a) in states_test_cases.iter() {
-            assert_eq!(states.get(*e).expect("Key should be present"), a);
+        // TODO, solve akwardness of having to to_string()
+        let accepting_state = "s2".to_string();
+        let rejecting_state = "qr".to_string();
+        let states_test = ["s0", "s1"];
+        assert_eq!(*representation.accepting_state(), Some(accepting_state));
+        assert_eq!(*representation.rejecting_state(), Some(rejecting_state));
+        for s in states_test.iter() {
+            assert!(states.contains(*s));
         }
 
         assert_eq!(representation.starting_state().as_ref().unwrap(), "s0");
@@ -514,14 +514,14 @@ mod tests {
         let states = representation.states();
         assert_eq!(states.len(), 4);
 
-        let states_test_cases = [
-            ("q0", State::Neutral),
-            ("q1", State::Neutral),
-            ("qr", State::Rejecting),
-            ("qa", State::Accepting),
-        ];
-        for (e, a) in states_test_cases.iter() {
-            assert_eq!(states.get(*e).expect("Key should be present"), a);
+        // TODO, solve akwardness of having to to_string()
+        let accepting_state = "qa".to_string();
+        let rejecting_state = "qr".to_string();
+        let states_test = ["q0", "q1"];
+        assert_eq!(*representation.accepting_state(), Some(accepting_state));
+        assert_eq!(*representation.rejecting_state(), Some(rejecting_state));
+        for s in states_test.iter() {
+            assert!(states.contains(*s));
         }
 
         assert_eq!(representation.starting_state().as_ref().unwrap(), "q0");

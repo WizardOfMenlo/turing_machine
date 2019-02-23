@@ -1,9 +1,8 @@
 use crate::builders::MachineRepresentationBuilder;
 use crate::builders::TransitionTableBuilder;
-use crate::common::State;
 use crate::transition_table::TransitionTable;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::hash::Hash;
 
 /// The representation of a Turing Machine. Note that, as from lecture, the only difference is in the Function (aka the [`TransitionTable`](../transition_table/trait.TransitionTable.html))  
@@ -24,7 +23,7 @@ where
     type ErrorTy;
 
     /// Get the list of states in the representation
-    fn states(&self) -> &HashMap<StateTy, State>;
+    fn states(&self) -> &HashSet<StateTy>;
 
     /// Get the starting state
     fn starting_state(&self) -> &StateTy;

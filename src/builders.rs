@@ -1,6 +1,6 @@
-use crate::common::*;
+use crate::common::State;
 use crate::machine_representation::MachineRepresentation;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader, Read};
 
@@ -55,7 +55,7 @@ where
     fn get_transition_builder(&mut self) -> &mut Self::TableBuilder;
 
     /// Get the list of states in the representation
-    fn states(&self) -> &HashMap<StateTy, State>;
+    fn states(&self) -> &HashSet<StateTy>;
 
     /// Get the starting state
     fn starting_state(&self) -> &Option<StateTy>;

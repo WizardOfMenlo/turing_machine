@@ -40,12 +40,6 @@ impl State {
     }
 }
 
-impl Default for State {
-    fn default() -> Self {
-        State::Neutral
-    }
-}
-
 /// Encapsulate the possible actions that can be done on the tape on a single step
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Action<T>

@@ -98,13 +98,11 @@ impl TuringMachine for DeterministicTuringMachine {
     }
 
     fn is_accepting(&self) -> bool {
-        let state = self.representation.states().get(&self.current_state);
-        state.expect("Invalid State").is_accepting()
+        &self.current_state == self.representation.accepting_state()
     }
 
     fn is_rejecting(&self) -> bool {
-        let state = self.representation.states().get(&self.current_state);
-        state.expect("Invalid State").is_rejecting()
+        &self.current_state == self.representation.rejecting_state()
     }
 }
 
