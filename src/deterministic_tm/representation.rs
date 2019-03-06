@@ -1,17 +1,15 @@
 use super::transition_table::{DeterministicTransitionTable, TableCreationError};
 use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
-use crate::common::Action;
+use crate::common::{Action, StateTrait};
 use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
 use std::collections::HashSet;
-use std::fmt::Debug;
-use std::hash::Hash;
 
 /// TODO, check we can default construct properly
 #[derive(Debug, Default)]
 pub struct DeterministicMachineRepresentation<StateTy>
 where
-    StateTy: Debug + Hash + Eq + Clone + Default,
+    StateTy: StateTrait,
 {
     states: HashSet<StateTy>,
     starting_state: StateTy,
@@ -37,7 +35,7 @@ impl From<TableCreationError> for RepresentationCreationError {
 
 impl<StateTy> MachineRepresentation<StateTy> for DeterministicMachineRepresentation<StateTy>
 where
-    StateTy: Debug + Hash + Eq + Clone + Default,
+    StateTy: StateTrait,
 {
     type InputTy = char;
     type OutputTy = Action<StateTy>;
@@ -70,8 +68,7 @@ where
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
         Builder: MachineRepresentationBuilder<StateTy>,
-        Builder::TableBuilder:
-            TransitionTableBuilder<StateTy, InputTy = Self::InputTy, OutputTy = Self::OutputTy>,
+        Builder::TableBuilder: TransitionTableBuilder<StateTy>,
     {
         let starting_state = b
             .starting_state()

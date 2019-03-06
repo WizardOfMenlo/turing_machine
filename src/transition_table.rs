@@ -7,15 +7,14 @@
 //!
 //! Furthermore, we add an `Option` to the return type to allow for shortand specifications
 
-use std::hash::Hash;
-
 use crate::builders::TransitionTableBuilder;
+use crate::common::StateTrait;
 
 /// Trait Encapsulating a Transition table for a [`TuringMachine`](../trait.TuringMachine.html)  
 /// Functionally speaking, it represents: `F: (StateTy x InputTy) -> OutputTy`
 pub trait TransitionTable<StateTy>: Sized
 where
-    StateTy: Eq + Hash,
+    StateTy: StateTrait,
 {
     /// The input it reads from tape, generally a `char`
     type InputTy;
@@ -38,6 +37,5 @@ where
     /// `Option<T>` in order to account for invalid parsing
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
-        Builder:
-            TransitionTableBuilder<StateTy, InputTy = Self::InputTy, OutputTy = Self::OutputTy>;
+        Builder: TransitionTableBuilder<StateTy>;
 }

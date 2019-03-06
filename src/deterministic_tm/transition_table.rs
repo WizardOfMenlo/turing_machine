@@ -1,16 +1,15 @@
 use crate::common::Action;
 use std::collections::HashMap;
-use std::fmt::Debug;
-use std::hash::Hash;
 
 use crate::builders::TransitionTableBuilder;
+use crate::common::StateTrait;
 use crate::transition_table::TransitionTable;
 
 /// The Transition table for a [`DeterministicTuringMachine`](../struct.TuringMachine.html)
 #[derive(Debug, Clone, Default)]
 pub struct DeterministicTransitionTable<StateTy>
 where
-    StateTy: Debug + Clone + Default + Eq + Hash,
+    StateTy: StateTrait,
 {
     transitions: HashMap<StateTy, HashMap<char, Action<StateTy>>>,
 }
@@ -23,7 +22,7 @@ pub enum TableCreationError {
 
 impl<StateTy> TransitionTable<StateTy> for DeterministicTransitionTable<StateTy>
 where
-    StateTy: Debug + Clone + Default + Eq + Hash,
+    StateTy: StateTrait,
 {
     type InputTy = char;
     type OutputTy = Action<StateTy>;
@@ -42,8 +41,7 @@ where
 
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
-        Builder:
-            TransitionTableBuilder<StateTy, InputTy = Self::InputTy, OutputTy = Self::OutputTy>,
+        Builder: TransitionTableBuilder<StateTy>,
     {
         let mut transitions = HashMap::new();
 

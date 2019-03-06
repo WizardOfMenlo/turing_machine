@@ -1,7 +1,6 @@
-use crate::common::State;
+use crate::common::*;
 use crate::machine_representation::MachineRepresentation;
 use std::collections::HashSet;
-use std::hash::Hash;
 use std::io::{BufRead, BufReader, Read};
 
 // TODO, would it generally be worth to replace at least some of these with structs? Or do we need the full generality of the problem?
@@ -9,11 +8,8 @@ use std::io::{BufRead, BufReader, Read};
 /// A trait to generally parse a transition table
 pub trait TransitionTableBuilder<StateTy>
 where
-    StateTy: Eq + Hash,
+    StateTy: StateTrait,
 {
-    type InputTy;
-    type OutputTy;
-
     type ErrorType: From<std::io::Error>;
 
     fn parse_line(&mut self, line: &str) -> Result<(), Self::ErrorType>;
@@ -35,16 +31,13 @@ where
     fn states(&self) -> Vec<StateTy>;
 
     /// Given a current state, what is the transitions that we can take?
-    fn get_state_transitions(&self, state: &StateTy) -> Vec<(Self::InputTy, Self::OutputTy)>;
+    fn get_state_transitions(&self, state: &StateTy) -> Vec<(char, Action<StateTy>)>;
 }
 
 pub trait MachineRepresentationBuilder<StateTy>
 where
-    StateTy: Eq + Hash,
+    StateTy: StateTrait,
 {
-    type InputTy;
-    type OutputTy;
-
     type TableBuilder: TransitionTableBuilder<StateTy>;
 
     type ErrorTy;
@@ -86,7 +79,7 @@ where
 #[derive(Debug, Default)]
 pub struct TuringMachineBuilder<StateTy, ReprTy>
 where
-    StateTy: Eq + Hash,
+    StateTy: StateTrait,
     ReprTy: MachineRepresentation<StateTy>,
 {
     tape: Vec<char>,
@@ -96,7 +89,7 @@ where
 
 impl<StateTy, ReprTy> TuringMachineBuilder<StateTy, ReprTy>
 where
-    StateTy: Eq + Hash,
+    StateTy: StateTrait,
     ReprTy: MachineRepresentation<StateTy>,
 {
     /// Create a empty `TuringMachineBuilder`.  

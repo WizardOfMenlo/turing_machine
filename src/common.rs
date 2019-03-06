@@ -1,4 +1,8 @@
 use std::fmt::Debug;
+use std::hash::Hash;
+
+pub trait StateTrait: Debug + Clone + Default + Eq + Hash {}
+impl<T> StateTrait for T where T: Debug + Clone + Default + Eq + Hash {}
 
 /// The set of movements that a [`TuringMachine`](../trait.TuringMachine.html) can take on a single transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,10 +45,10 @@ impl State {
 }
 
 /// Encapsulate the possible actions that can be done on the tape on a single step
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Action<T>
 where
-    T: Eq + Debug + Clone + Default,
+    T: StateTrait,
 {
     next_state: T,
     tape_output: char,
@@ -53,7 +57,7 @@ where
 
 impl<T> Action<T>
 where
-    T: Eq + Debug + Clone + Default,
+    T: StateTrait,
 {
     pub(crate) fn new(next_state: T, tape_output: char, motion: Motion) -> Self {
         Action {

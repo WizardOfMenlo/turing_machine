@@ -3,12 +3,13 @@ use crate::builders::TransitionTableBuilder;
 use crate::transition_table::TransitionTable;
 
 use std::collections::HashSet;
-use std::hash::Hash;
+
+use crate::common::StateTrait;
 
 /// The representation of a Turing Machine. Note that, as from lecture, the only difference is in the Function (aka the [`TransitionTable`](../transition_table/trait.TransitionTable.html))  
 pub trait MachineRepresentation<StateTy>: Sized
 where
-    StateTy: Hash + Eq,
+    StateTy: StateTrait,
 {
     /// The `InputTy` of the underlying `TransitionTable`
     type InputTy;
@@ -45,6 +46,5 @@ where
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
         Builder: MachineRepresentationBuilder<StateTy>,
-        Builder::TableBuilder:
-            TransitionTableBuilder<StateTy, InputTy = Self::InputTy, OutputTy = Self::OutputTy>;
+        Builder::TableBuilder: TransitionTableBuilder<StateTy>;
 }
