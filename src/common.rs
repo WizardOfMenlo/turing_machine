@@ -5,7 +5,7 @@ pub trait StateTrait: Debug + Clone + Default + Eq + Hash {}
 impl<T> StateTrait for T where T: Debug + Clone + Default + Eq + Hash {}
 
 /// The set of movements that a [`TuringMachine`](../trait.TuringMachine.html) can take on a single transition
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Motion {
     Left,
     Right,
@@ -45,7 +45,7 @@ impl State {
 }
 
 /// Encapsulate the possible actions that can be done on the tape on a single step
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Action<T>
 where
     T: StateTrait,

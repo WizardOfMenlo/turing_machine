@@ -3,6 +3,7 @@ pub mod common;
 pub mod deterministic_tm;
 pub mod machine_parser;
 pub mod machine_representation;
+pub mod non_deterministic_tm;
 pub mod stats;
 pub mod transition_table;
 
