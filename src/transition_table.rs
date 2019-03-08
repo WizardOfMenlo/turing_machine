@@ -9,6 +9,7 @@
 
 use crate::builders::TransitionTableBuilder;
 use crate::common::StateTrait;
+use std::fmt::Debug;
 
 /// Trait Encapsulating a Transition table for a [`TuringMachine`](../trait.TuringMachine.html)  
 /// Functionally speaking, it represents: `F: (StateTy x InputTy) -> OutputTy`
@@ -23,7 +24,7 @@ where
     type OutputTy;
 
     /// The error to be raise on invalid build
-    type ErrorTy;
+    type ErrorTy: Debug;
 
     /// Computes `F(state, input)`. Returns an `Option<T>` to account for invalid values and/or default options
     fn apply_transition_table(

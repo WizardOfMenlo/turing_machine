@@ -1,6 +1,7 @@
 use crate::builders::MachineRepresentationBuilder;
 use crate::builders::TransitionTableBuilder;
 use crate::transition_table::TransitionTable;
+use std::fmt::Debug;
 
 use std::collections::HashSet;
 
@@ -21,7 +22,7 @@ where
     type TableTy: TransitionTable<StateTy, InputTy = Self::InputTy, OutputTy = Self::OutputTy>;
 
     /// The Error type raised on invalid construction
-    type ErrorTy;
+    type ErrorTy: Debug;
 
     /// Get the list of states in the representation
     fn states(&self) -> &HashSet<StateTy>;

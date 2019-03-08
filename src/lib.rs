@@ -22,7 +22,7 @@ pub trait TuringMachine: Sized {
     type ReprTy: MachineRepresentation<Self::StateTy>;
 
     /// The error raised on failed construction
-    type ErrorTy;
+    type ErrorTy: Debug;
 
     /// Takes a single step
     fn step(&mut self);

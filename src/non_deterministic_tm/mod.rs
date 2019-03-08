@@ -12,8 +12,6 @@ use representation::NonDeterministicMachineRepresentation;
 use std::collections::HashSet;
 use std::iter;
 
-/// TODO, is there a way to flatten this better?
-
 #[derive(Debug)]
 pub struct NonDeterministicTuringMachine<StateTy>
 where
@@ -24,8 +22,6 @@ where
     tapes: Vec<Vec<char>>,
     representation: NonDeterministicMachineRepresentation<StateTy>,
 }
-
-// TODO, find a way to currectly implement all
 
 #[derive(Debug)]
 pub enum MachineCreationError {
@@ -106,17 +102,20 @@ where
             }
 
             let mut actions_it = possible_actions.into_iter();
-            // We handle the first one differently, to avoid too many allocations
+            // We handle the first one differently, to reduce too many allocations
             let first_act = actions_it.next().unwrap();
 
             for act in actions_it {
+                // Make copies
                 let mut new_tape = corresponding_tape.clone();
                 let mut new_position = *corresponding_position;
                 let mut new_state = state.clone();
+
                 apply_action(act, &mut new_tape, &mut new_position, &mut new_state);
                 new_paths.insert((new_tape, new_position, new_state));
             }
 
+            // We do the first one first, so we don't invalidate the variables
             apply_action(first_act, corresponding_tape, corresponding_position, state);
         }
 
