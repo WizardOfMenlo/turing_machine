@@ -8,6 +8,9 @@ use turing_machine::{
     deterministic_tm::{
         representation::DeterministicMachineRepresentation, DeterministicTuringMachine,
     },
+    non_deterministic_tm::{
+        representation::NonDeterministicMachineRepresentation, NonDeterministicTuringMachine,
+    },
     stats::{ExecutionResult, TuringMachineStatsExt},
     TuringMachine,
 };
@@ -128,20 +131,34 @@ fn main() {
                 .value_name("TAPE_FILE")
                 .help("A file containing the tape the machine should start on"),
         )
+        .arg(
+            Arg::with_name("ndtm")
+                .short("n")
+                .help("Use a non deterministic TM"),
+        )
         .get_matches();
 
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
+    let tape_file = matches.value_of("tapefile");
 
-    let result = run::<
-        DeterministicTuringMachine<String>,
-        DeterministicMachineRepresentation<String>,
-    >(repr_path, matches.value_of("tapefile"));
-    let exit_code = handle_and_get_exit_code(result);
+    let exit_code = if !matches.is_present("ndtm") {
+        let result = run::<
+            DeterministicTuringMachine<String>,
+            DeterministicMachineRepresentation<String>,
+        >(repr_path, tape_file);
+        handle_and_get_exit_code(result)
+    } else {
+        let result = run::<
+            NonDeterministicTuringMachine<String>,
+            NonDeterministicMachineRepresentation<String>,
+        >(repr_path, tape_file);
+        handle_and_get_exit_code(result)
+    };
 
     match exit_code {
-        0 => println!("Accepted"),
-        1 => println!("Rejected"),
+        0 => println!("accepted"),
+        1 => println!("not accepted"),
         2 => println!("input error"),
         3 => println!("IO Error"),
         _ => unreachable!(),
