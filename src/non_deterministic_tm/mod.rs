@@ -100,7 +100,7 @@ where
                 .unwrap_or_else(HashSet::new);
 
             // If we cannot proceed, then we set the machine in a rejecting state for this path
-            if possible_actions.len() == 0 {
+            if possible_actions.is_empty() {
                 *state = self.representation.rejecting_state().clone();
                 continue;
             }
@@ -111,7 +111,7 @@ where
 
             for act in actions_it {
                 let mut new_tape = corresponding_tape.clone();
-                let mut new_position = corresponding_position.clone();
+                let mut new_position = *corresponding_position;
                 let mut new_state = state.clone();
                 apply_action(act, &mut new_tape, &mut new_position, &mut new_state);
                 new_paths.insert((new_tape, new_position, new_state));
