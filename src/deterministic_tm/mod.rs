@@ -69,13 +69,11 @@ where
             .ok_or(MachineCreationError::TapeAlphabetMismatch)?
             .decompose();
 
-        let starting_state = repr.starting_state().clone();
-
         Ok(Self {
             tape,
+            current_state: repr.starting_state().clone(),
             representation: repr,
             current_cell: 0,
-            current_state: starting_state,
         })
     }
 
