@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use log::{error, info};
 use std::fs::File;
 use std::io::{self, Read};
 use turing_machine::builders::TuringMachineBuilder;
@@ -94,8 +95,8 @@ fn handle_and_get_exit_code<T: TuringMachine>(
 ) -> i32 {
     match res {
         Ok(exe) => {
-            println!(" Machine ran for {} steps", exe.num_steps);
-            println!(" Final configuration: {:?}", exe.tape);
+            info!(" Machine ran for {} steps", exe.num_steps);
+            info!(" Final configuration: {:?}", exe.tape);
             if exe.accepting {
                 0
             } else {
@@ -104,15 +105,15 @@ fn handle_and_get_exit_code<T: TuringMachine>(
         }
         Err(ty) => match ty {
             ErrorType::Parsing(e) => {
-                println!("Parsing({:?})", e);
+                error!("Parsing({:?})", e);
                 2
             }
             ErrorType::ReprCreation(e) => {
-                println!("Repr({:?})", e);
+                error!("Repr({:?})", e);
                 2
             }
             ErrorType::MachineCreation(e) => {
-                println!("Machine({:?})", e);
+                error!("Machine({:?})", e);
                 2
             }
             ErrorType::IO(_) => 3,
