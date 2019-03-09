@@ -81,112 +81,8 @@ impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
-    use crate::common::StateTrait;
-    use crate::machine_representation::MachineRepresentation;
-    use crate::transition_table::TransitionTable;
-    use std::collections::HashSet;
-    use std::marker::PhantomData;
-
-    struct MockMachine<T>
-    where
-        T: StateTrait,
-    {
-        p: PhantomData<T>,
-        tape: Vec<char>,
-    }
-
-    impl<T> TransitionTable<T> for ()
-    where
-        T: StateTrait,
-    {
-        type InputTy = ();
-        type OutputTy = ();
-        type ErrorTy = ();
-
-        fn apply_transition_table(&self, _: &T, _: Self::InputTy) -> Option<Self::OutputTy> {
-            None
-        }
-
-        fn from_builder<Builder>(_: &Builder) -> Result<Self, Self::ErrorTy>
-        where
-            Builder: TransitionTableBuilder<T>,
-        {
-            Err(())
-        }
-    }
-
-    impl<T> MachineRepresentation<T> for ()
-    where
-        T: StateTrait,
-    {
-        type InputTy = ();
-        type OutputTy = ();
-        type TableTy = ();
-        type ErrorTy = ();
-
-        fn states(&self) -> &HashSet<T> {
-            unreachable!()
-        }
-
-        fn starting_state(&self) -> &T {
-            unreachable!()
-        }
-
-        fn accepting_state(&self) -> &T {
-            unreachable!()
-        }
-
-        fn rejecting_state(&self) -> &T {
-            unreachable!()
-        }
-
-        fn alphabet(&self) -> &HashSet<char> {
-            unreachable!()
-        }
-
-        fn transition_table(&self) -> &Self::TableTy {
-            &()
-        }
-
-        fn from_builder<Builder>(_: &Builder) -> Result<Self, Self::ErrorTy>
-        where
-            Builder: MachineRepresentationBuilder<T>,
-            Builder::TableBuilder: TransitionTableBuilder<T>,
-        {
-            Err(())
-        }
-    }
-
-    impl<T> TuringMachine for MockMachine<T>
-    where
-        T: StateTrait,
-    {
-        type StateTy = T;
-        type Tape = Vec<char>;
-        type ReprTy = ();
-        type ErrorTy = ();
-
-        fn step(&mut self) {}
-
-        fn is_accepting(&self) -> bool {
-            false
-        }
-
-        fn is_rejecting(&self) -> bool {
-            false
-        }
-
-        fn tape(&self) -> &Self::Tape {
-            &self.tape
-        }
-
-        fn from_builder(
-            _: TuringMachineBuilder<Self::StateTy, Self::ReprTy>,
-        ) -> Result<Self, Self::ErrorTy> {
-            Err(())
-        }
-    }
+    use crate::common::*;
+    use crate::mocking::MockMachine;
 
     fn make_mock_machine<T>(t: Vec<char>) -> MockMachine<T>
     where
@@ -200,10 +96,8 @@ mod tests {
 
     #[test]
     fn check_initialization() {
-        let mock = make_mock_machine::<String>(Vec::new());
-        let stats = TuringMachineStatsExt::new(mock);
+        let stats = TuringMachineStatsExt::new(());
         assert_eq!(stats.get_number_of_steps(), 0);
-        assert_eq!(*stats.tape(), Vec::new());
     }
 
     #[test]
