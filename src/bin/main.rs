@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use log::{error, info};
+use log::{debug, error, info};
 use std::fs::File;
 use std::io::{self, Read};
 use turing_machine::builders::TuringMachineBuilder;
@@ -71,21 +71,26 @@ where
     // Open the repr file
     let repr_file = File::open(repr_path)?;
 
+    debug!("Parsing {} ...", repr_path);
     // Parse to TM bc
     let repr_builder = machine_parser::parse(repr_file)?;
 
+    debug!("Building Representation ...");
     // Build the representation
     let repr = Repr::from_builder(&repr_builder).map_err(|e| ErrorType::ReprCreation(e))?;
 
+    debug!("Creating Machine Builder ...");
     // Adjoin with the tape
     let builder = TuringMachineBuilder::new().repr(repr).tape(tape);
 
+    debug!("Creating Machine ...");
     // Build the machine
     let machine = T::from_builder(builder).map_err(|e| ErrorType::MachineCreation(e))?;
 
     // Decorate with stats extension
     let mut machine = TuringMachineStatsExt::new(machine);
 
+    debug!("Execution Start ...");
     // Run to completion
     Ok(machine.execute_and_get_result())
 }
