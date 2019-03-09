@@ -101,8 +101,16 @@ fn handle_and_get_exit_code<T: TuringMachine>(
             }
         }
         Err(ty) => match ty {
-            ErrorType::Parsing(_) | ErrorType::ReprCreation(_) | ErrorType::MachineCreation(_) => {
-                //println!(" {:?}", ty);
+            ErrorType::Parsing(e) => {
+                println!("Parsing({:?})", e);
+                2
+            }
+            ErrorType::ReprCreation(e) => {
+                println!("Repr({:?})", e);
+                2
+            }
+            ErrorType::MachineCreation(e) => {
+                println!("Machine({:?})", e);
                 2
             }
             ErrorType::IO(_) => 3,
