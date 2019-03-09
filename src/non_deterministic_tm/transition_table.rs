@@ -1,31 +1,29 @@
 use crate::common::Action;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::builders::TransitionTableBuilder;
 use crate::common::StateTrait;
 use crate::transition_table::TransitionTable;
 
-/// The Transition table for a [`DeterministicTuringMachine`](../struct.TuringMachine.html)
 #[derive(Debug, Clone, Default)]
-pub struct DeterministicTransitionTable<StateTy>
+pub struct NonDeterministicTransitionTable<StateTy>
 where
     StateTy: StateTrait,
 {
-    transitions: HashMap<StateTy, HashMap<char, Action<StateTy>>>,
+    transitions: HashMap<StateTy, HashMap<char, HashSet<Action<StateTy>>>>,
 }
 
 #[derive(Debug)]
 pub enum TableCreationError {
-    DuplicateInput,
     DuplicateState,
 }
 
-impl<StateTy> TransitionTable<StateTy> for DeterministicTransitionTable<StateTy>
+impl<StateTy> TransitionTable<StateTy> for NonDeterministicTransitionTable<StateTy>
 where
     StateTy: StateTrait,
 {
     type InputTy = char;
-    type OutputTy = Action<StateTy>;
+    type OutputTy = HashSet<Action<StateTy>>;
     type ErrorTy = TableCreationError;
 
     fn apply_transition_table(
@@ -50,17 +48,18 @@ where
             let associated_transitions = b.get_state_transitions(&state);
             let mut state_transitions = HashMap::new();
             for (c, act) in associated_transitions {
-                if state_transitions.insert(c, act).is_some() {
-                    // We want no duplicates
-                    return Err(TableCreationError::DuplicateInput);
-                }
+                // Add, initializing if not present
+                state_transitions
+                    .entry(c)
+                    .or_insert_with(HashSet::new)
+                    .insert(act);
             }
             if transitions.insert(state, state_transitions).is_some() {
-                // Same with states
+                // No duplicate states are allowed
                 return Err(TableCreationError::DuplicateState);
             }
         }
 
-        Ok(DeterministicTransitionTable { transitions })
+        Ok(NonDeterministicTransitionTable { transitions })
     }
 }

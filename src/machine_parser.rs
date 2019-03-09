@@ -104,9 +104,6 @@ fn convert_to_char(s: &str) -> Option<char> {
 }
 
 impl TransitionTableBuilder<String> for MachineTableParser {
-    type InputTy = char;
-    type OutputTy = Action<String>;
-
     type ErrorType = TransitionTableError;
 
     fn parse_line(&mut self, line: &str) -> Result<(), TransitionTableError> {
@@ -184,8 +181,6 @@ impl MachineParser {
 }
 
 impl MachineRepresentationBuilder<String> for MachineParser {
-    type InputTy = char;
-    type OutputTy = Action<String>;
     type TableBuilder = MachineTableParser;
 
     type ErrorTy = ParsingError;

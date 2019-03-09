@@ -1,4 +1,4 @@
-use super::transition_table::{DeterministicTransitionTable, TableCreationError};
+use super::transition_table::{NonDeterministicTransitionTable, TableCreationError};
 use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
 use crate::common::{Action, StateTrait};
 use crate::machine_representation::MachineRepresentation;
@@ -6,8 +6,9 @@ use crate::transition_table::TransitionTable;
 use std::collections::HashSet;
 
 /// TODO, check we can default construct properly
+/// TODO, the code is exactly the same as the deterministic one, maybe make a helper struct?
 #[derive(Debug, Default)]
-pub struct DeterministicMachineRepresentation<StateTy>
+pub struct NonDeterministicMachineRepresentation<StateTy>
 where
     StateTy: StateTrait,
 {
@@ -16,7 +17,7 @@ where
     accepting_state: StateTy,
     rejecting_state: StateTy,
     alphabet: HashSet<char>,
-    transition_table: DeterministicTransitionTable<StateTy>,
+    transition_table: NonDeterministicTransitionTable<StateTy>,
 }
 
 #[derive(Debug)]
@@ -33,13 +34,13 @@ impl From<TableCreationError> for RepresentationCreationError {
     }
 }
 
-impl<StateTy> MachineRepresentation<StateTy> for DeterministicMachineRepresentation<StateTy>
+impl<StateTy> MachineRepresentation<StateTy> for NonDeterministicMachineRepresentation<StateTy>
 where
     StateTy: StateTrait,
 {
     type InputTy = char;
-    type OutputTy = Action<StateTy>;
-    type TableTy = DeterministicTransitionTable<StateTy>;
+    type OutputTy = HashSet<Action<StateTy>>;
+    type TableTy = NonDeterministicTransitionTable<StateTy>;
     type ErrorTy = RepresentationCreationError;
 
     fn states(&self) -> &HashSet<StateTy> {
@@ -92,7 +93,7 @@ where
             accepting_state,
             rejecting_state,
             alphabet: b.alphabet().clone(),
-            transition_table: DeterministicTransitionTable::from_builder(
+            transition_table: NonDeterministicTransitionTable::from_builder(
                 b.transition_table_builder(),
             )?,
         })

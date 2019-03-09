@@ -3,24 +3,26 @@ pub mod common;
 pub mod deterministic_tm;
 pub mod machine_parser;
 pub mod machine_representation;
+pub mod non_deterministic_tm;
 pub mod stats;
 pub mod transition_table;
 
 use crate::builders::TuringMachineBuilder;
+use crate::common::StateTrait;
 use crate::machine_representation::MachineRepresentation;
+
 use std::fmt::Debug;
-use std::hash::Hash;
 
 /// A trait encapsulating the behavior of a general TM
 /// Should be general enough to account for [`DeterministicTuringMachine`](struct.DeterministicTuringMachine.html), k-tape machines, NDTMs and so on
 pub trait TuringMachine: Sized {
     /// Associated tape
     type Tape: Clone + Debug;
-    type StateTy: Hash + Eq;
+    type StateTy: StateTrait;
     type ReprTy: MachineRepresentation<Self::StateTy>;
 
     /// The error raised on failed construction
-    type ErrorTy;
+    type ErrorTy: Debug;
 
     /// Takes a single step
     fn step(&mut self);

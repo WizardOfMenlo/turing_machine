@@ -6,50 +6,52 @@ use turing_machine::machine_parser::{self, ParsingError};
 use turing_machine::machine_representation::MachineRepresentation;
 use turing_machine::{
     deterministic_tm::{
-        representation::DeterministicMachineRepresentation,
-        representation::RepresentationCreationError, DeterministicTuringMachine,
-        MachineCreationError,
+        representation::DeterministicMachineRepresentation, DeterministicTuringMachine,
+    },
+    non_deterministic_tm::{
+        representation::NonDeterministicMachineRepresentation, NonDeterministicTuringMachine,
     },
     stats::{ExecutionResult, TuringMachineStatsExt},
     TuringMachine,
 };
 
 #[derive(Debug)]
-enum ErrorType {
+enum ErrorType<T>
+where
+    T: TuringMachine,
+{
     IO(io::Error),
     Parsing(ParsingError),
-    ReprCreation(RepresentationCreationError),
-    MachineCreation(MachineCreationError),
+    ReprCreation(<T::ReprTy as MachineRepresentation<T::StateTy>>::ErrorTy),
+    MachineCreation(T::ErrorTy),
 }
 
-impl From<io::Error> for ErrorType {
+impl<T> From<io::Error> for ErrorType<T>
+where
+    T: TuringMachine,
+{
     fn from(err: io::Error) -> Self {
         ErrorType::IO(err)
     }
 }
 
-impl From<ParsingError> for ErrorType {
+impl<T> From<ParsingError> for ErrorType<T>
+where
+    T: TuringMachine,
+{
     fn from(err: ParsingError) -> Self {
         ErrorType::Parsing(err)
     }
 }
 
-impl From<RepresentationCreationError> for ErrorType {
-    fn from(err: RepresentationCreationError) -> Self {
-        ErrorType::ReprCreation(err)
-    }
-}
-
-impl From<MachineCreationError> for ErrorType {
-    fn from(err: MachineCreationError) -> Self {
-        ErrorType::MachineCreation(err)
-    }
-}
-
-fn run(
+fn run<T, Repr>(
     repr_path: &str,
     tape_file: Option<&str>,
-) -> Result<ExecutionResult<impl TuringMachine>, ErrorType> {
+) -> Result<ExecutionResult<T>, ErrorType<T>>
+where
+    T: TuringMachine<StateTy = String, ReprTy = Repr>,
+    Repr: MachineRepresentation<String>,
+{
     // One of the two branches must necessarily be true
     let tape: Vec<char> = match tape_file {
         Some(p) => {
@@ -70,13 +72,13 @@ fn run(
     let repr_builder = machine_parser::parse(repr_file)?;
 
     // Build the representation
-    let repr = DeterministicMachineRepresentation::from_builder(&repr_builder)?;
+    let repr = Repr::from_builder(&repr_builder).map_err(|e| ErrorType::ReprCreation(e))?;
 
     // Adjoin with the tape
     let builder = TuringMachineBuilder::new().repr(repr).tape(tape);
 
     // Build the machine
-    let machine = DeterministicTuringMachine::from_builder(builder)?;
+    let machine = T::from_builder(builder).map_err(|e| ErrorType::MachineCreation(e))?;
 
     // Decorate with stats extension
     let mut machine = TuringMachineStatsExt::new(machine);
@@ -85,7 +87,9 @@ fn run(
     Ok(machine.execute_and_get_result())
 }
 
-fn handle_and_get_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, ErrorType>) -> i32 {
+fn handle_and_get_exit_code<T: TuringMachine>(
+    res: Result<ExecutionResult<T>, ErrorType<T>>,
+) -> i32 {
     match res {
         Ok(exe) => {
             println!(" Machine ran for {} steps", exe.num_steps);
@@ -97,8 +101,16 @@ fn handle_and_get_exit_code<T: TuringMachine>(res: Result<ExecutionResult<T>, Er
             }
         }
         Err(ty) => match ty {
-            ErrorType::Parsing(_) | ErrorType::ReprCreation(_) | ErrorType::MachineCreation(_) => {
-                println!(" {:?}", ty);
+            ErrorType::Parsing(e) => {
+                println!("Parsing({:?})", e);
+                2
+            }
+            ErrorType::ReprCreation(e) => {
+                println!("Repr({:?})", e);
+                2
+            }
+            ErrorType::MachineCreation(e) => {
+                println!("Machine({:?})", e);
                 2
             }
             ErrorType::IO(_) => 3,
@@ -127,17 +139,34 @@ fn main() {
                 .value_name("TAPE_FILE")
                 .help("A file containing the tape the machine should start on"),
         )
+        .arg(
+            Arg::with_name("ndtm")
+                .short("n")
+                .help("Use a non deterministic TM"),
+        )
         .get_matches();
 
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
+    let tape_file = matches.value_of("tapefile");
 
-    let result = run(repr_path, matches.value_of("tapefile"));
-    let exit_code = handle_and_get_exit_code(result);
+    let exit_code = if !matches.is_present("ndtm") {
+        let result = run::<
+            DeterministicTuringMachine<String>,
+            DeterministicMachineRepresentation<String>,
+        >(repr_path, tape_file);
+        handle_and_get_exit_code(result)
+    } else {
+        let result = run::<
+            NonDeterministicTuringMachine<String>,
+            NonDeterministicMachineRepresentation<String>,
+        >(repr_path, tape_file);
+        handle_and_get_exit_code(result)
+    };
 
     match exit_code {
-        0 => println!("Accepted"),
-        1 => println!("Rejected"),
+        0 => println!("accepted"),
+        1 => println!("not accepted"),
         2 => println!("input error"),
         3 => println!("IO Error"),
         _ => unreachable!(),

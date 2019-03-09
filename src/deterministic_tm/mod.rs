@@ -2,7 +2,7 @@ pub mod representation;
 pub mod transition_table;
 
 use crate::{
-    common::{Action, Motion},
+    common::{Action, Motion, StateTrait},
     machine_representation::MachineRepresentation,
     transition_table::TransitionTable,
     TuringMachine, TuringMachineBuilder,
@@ -15,15 +15,21 @@ use std::{fmt, iter};
 /// Struct representing a TM with deterministic behaviour, singly infinite tape and variable alphabet  
 /// This is (almost) the most basic TM that one can conceive.
 #[derive(Debug)]
-pub struct DeterministicTuringMachine {
+pub struct DeterministicTuringMachine<StateTy>
+where
+    StateTy: StateTrait,
+{
     tape: Vec<char>,
-    representation: DeterministicMachineRepresentation<String>,
+    representation: DeterministicMachineRepresentation<StateTy>,
     current_cell: usize,
-    current_state: String,
+    current_state: StateTy,
 }
 
-impl DeterministicTuringMachine {
-    fn apply_action(&mut self, act: &Action<String>) {
+impl<StateTy> DeterministicTuringMachine<StateTy>
+where
+    StateTy: StateTrait,
+{
+    fn apply_action(&mut self, act: &Action<StateTy>) {
         // Bound checks
         if self.current_cell + 1 >= self.tape.len() {
             let new_section = iter::repeat('_').take(self.tape.len() + 2);
@@ -45,10 +51,13 @@ pub enum MachineCreationError {
     TapeAlphabetMismatch,
 }
 
-impl TuringMachine for DeterministicTuringMachine {
+impl<StateTy> TuringMachine for DeterministicTuringMachine<StateTy>
+where
+    StateTy: StateTrait,
+{
     type Tape = Vec<char>;
-    type StateTy = String;
-    type ReprTy = DeterministicMachineRepresentation<String>;
+    type StateTy = StateTy;
+    type ReprTy = DeterministicMachineRepresentation<StateTy>;
     type ErrorTy = MachineCreationError;
 
     fn from_builder(
@@ -60,13 +69,11 @@ impl TuringMachine for DeterministicTuringMachine {
             .ok_or(MachineCreationError::TapeAlphabetMismatch)?
             .decompose();
 
-        let starting_state = repr.starting_state().clone();
-
         Ok(Self {
             tape,
+            current_state: repr.starting_state().clone(),
             representation: repr,
             current_cell: 0,
-            current_state: starting_state,
         })
     }
 
@@ -104,7 +111,10 @@ impl TuringMachine for DeterministicTuringMachine {
     }
 }
 
-impl fmt::Display for DeterministicTuringMachine {
+impl<StateTy> fmt::Display for DeterministicTuringMachine<StateTy>
+where
+    StateTy: StateTrait + fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Current State: {}", self.current_state)?;
         self.tape.iter().for_each(|v| write!(f, "{}", v).unwrap());
