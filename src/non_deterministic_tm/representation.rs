@@ -5,9 +5,8 @@ use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
 use std::collections::HashSet;
 
-/// TODO, check we can default construct properly
 /// TODO, the code is exactly the same as the deterministic one, maybe make a helper struct?
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct NonDeterministicMachineRepresentation<StateTy>
 where
     StateTy: StateTrait,

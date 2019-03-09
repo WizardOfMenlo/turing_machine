@@ -15,6 +15,8 @@ use turing_machine::{
     TuringMachine,
 };
 
+/// TODO, simplify imports, coz they are hella ugly rn
+
 #[derive(Debug)]
 enum ErrorType<T>
 where

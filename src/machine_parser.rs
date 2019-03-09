@@ -553,6 +553,8 @@ mod tests {
         }
     }
 
+    /// TODO, add a test for each error type
+
     #[test]
     fn empty_repr() {
         let test_string = "";
