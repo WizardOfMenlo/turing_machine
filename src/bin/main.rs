@@ -1,5 +1,6 @@
 use clap::{App, Arg};
 use log::{debug, error, info};
+use std::fmt::Display;
 use std::fs::File;
 use std::io::{self, Read};
 use turing_machine::builders::TuringMachineBuilder;
@@ -68,6 +69,8 @@ where
         None => Vec::new(),
     };
 
+    info!("Tape: {:?}", tape);
+
     // Open the repr file
     let repr_file = File::open(repr_path)?;
 
@@ -77,7 +80,7 @@ where
 
     debug!("Building Representation ...");
     // Build the representation
-    let repr = Repr::from_builder(&repr_builder).map_err(|e| ErrorType::ReprCreation(e))?;
+    let repr = Repr::from_builder(&repr_builder).map_err(ErrorType::ReprCreation)?;
 
     debug!("Creating Machine Builder ...");
     // Adjoin with the tape
@@ -85,28 +88,35 @@ where
 
     debug!("Creating Machine ...");
     // Build the machine
-    let machine = T::from_builder(builder).map_err(|e| ErrorType::MachineCreation(e))?;
+    let machine = T::from_builder(builder).map_err(ErrorType::MachineCreation)?;
 
     // Decorate with stats extension
-    let mut machine = TuringMachineStatsExt::new(machine);
+    let machine = TuringMachineStatsExt::new(machine);
 
     debug!("Execution Start ...");
     // Run to completion
     Ok(machine.execute_and_get_result())
 }
 
-fn handle_and_get_exit_code<T: TuringMachine>(
+fn handle_and_get_exit_code<T: TuringMachine + Display>(
     res: Result<ExecutionResult<T>, ErrorType<T>>,
 ) -> i32 {
     match res {
         Ok(exe) => {
             info!(" Machine ran for {} steps", exe.num_steps);
             info!(" Final configuration: {:?}", exe.tape);
-            if exe.accepting {
+
+            let res = if exe.accepting {
+                println!("accepted");
                 0
             } else {
+                println!("not accepted");
                 1
-            }
+            };
+            println!("{}", exe.num_steps - 1);
+            print!("{}", exe.tm);
+
+            res
         }
         Err(ty) => match ty {
             ErrorType::Parsing(e) => {
@@ -175,12 +185,11 @@ fn main() {
         handle_and_get_exit_code(result)
     };
 
+    // Handle remaining case
     match exit_code {
-        0 => println!("accepted"),
-        1 => println!("not accepted"),
         2 => println!("input error"),
         3 => println!("IO Error"),
-        _ => unreachable!(),
+        _ => {}
     }
 
     std::process::exit(exit_code);

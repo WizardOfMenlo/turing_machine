@@ -23,6 +23,8 @@ pub enum RepresentationCreationError {
     StartingStateNotSpecified,
     AcceptStateNotSpecified,
     RejectStateNotSpecified,
+    TransitionTableStateMismatch,
+    TransitionTableAlphabetMismatch,
     TableConstructionError(TableCreationError),
 }
 
@@ -85,15 +87,36 @@ where
             .cloned()
             .ok_or(RepresentationCreationError::RejectStateNotSpecified)?;
 
+        // Validate states
+        if !b
+            .transition_table_builder()
+            .states()
+            .iter()
+            .all(|s| b.states().contains(s))
+        {
+            return Err(RepresentationCreationError::TransitionTableStateMismatch);
+        }
+
+        // Validate alphabet
+        if !b
+            .transition_table_builder()
+            .alphabet()
+            .iter()
+            .all(|c| b.alphabet().contains(c))
+        {
+            return Err(RepresentationCreationError::TransitionTableAlphabetMismatch);
+        }
+
+        let transition_table =
+            DeterministicTransitionTable::from_builder(b.transition_table_builder())?;
+
         Ok(Self {
             states: b.states().clone(),
             starting_state,
             accepting_state,
             rejecting_state,
             alphabet: b.alphabet().clone(),
-            transition_table: DeterministicTransitionTable::from_builder(
-                b.transition_table_builder(),
-            )?,
+            transition_table,
         })
     }
 }

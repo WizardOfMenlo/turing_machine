@@ -107,6 +107,11 @@ impl TransitionTableBuilder<String> for MachineTableParser {
     type ErrorType = TransitionTableError;
 
     fn parse_line(&mut self, line: &str) -> Result<(), TransitionTableError> {
+        // Skip whitespace
+        if line.trim() == "" {
+            return Ok(());
+        }
+
         let tokens: Vec<&str> = line.split(' ').collect();
         let num_tokens = tokens.len();
         if num_tokens != 5 {
@@ -142,8 +147,30 @@ impl TransitionTableBuilder<String> for MachineTableParser {
         Ok(())
     }
 
-    fn states(&self) -> Vec<String> {
-        self.transitions.keys().cloned().collect()
+    fn states(&self) -> HashSet<String> {
+        //self.transitions.keys().cloned().collect()
+        self.transitions
+            .iter()
+            .map(|(s, v)| {
+                let mut reachable_states: Vec<_> =
+                    v.iter().map(|(_, act)| act.next_state()).cloned().collect();
+                reachable_states.push(s.to_string());
+                reachable_states
+            })
+            .flatten()
+            .collect()
+    }
+
+    fn alphabet(&self) -> HashSet<char> {
+        self.transitions
+            .values()
+            .map(|v| {
+                v.iter()
+                    .map(|(c, act)| vec![*c, *act.tape_output()])
+                    .flatten()
+            })
+            .flatten()
+            .collect()
     }
 
     fn get_state_transitions(&self, state: &String) -> Vec<(char, Action<String>)> {
@@ -316,7 +343,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
         current_line.clear();
         reader.read_line(&mut current_line)?;
 
-        let tokens: Vec<&str> = current_line.split(' ').collect();
+        let tokens: Vec<&str> = current_line.trim().split(' ').collect();
         let num_tokens = tokens.len();
         if num_tokens == 0 || num_tokens > 2 {
             return Err(ParsingError::States(StateError::InvalidStateLine(
@@ -378,6 +405,10 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
 
     for token in split_it {
         let token = token.trim();
+        // Skip whitespace
+        if token.is_empty() {
+            continue;
+        }
         if token.len() != 1 {
             return Err(ParsingError::Alphabet(AlphabetError::TokenNotAChar(
                 token.to_string(),
@@ -393,7 +424,7 @@ pub fn parse(source: impl Read) -> Result<MachineParser, ParsingError> {
 
     // Sanity checks
     let num_elements = repr_builder.alphabet_len();
-    if num_elements != num_alphabet_elements + 1 {
+    if num_alphabet_elements == 0 || num_elements != num_alphabet_elements + 1 {
         return Err(ParsingError::Alphabet(
             AlphabetError::InvalidNumberOfElements(num_elements),
         ));
@@ -499,8 +530,8 @@ mod tests {
     }
 
     #[test]
-    fn valid_example2() {
-        let test_string = "states 4\nq0\nq1\nqr -\nqa +\nalphabet 2 a b\nq0 a q0 a R\nq0 _ qr _ L\nq0 b q1 b R\nq1 a qr a L\nq1 b qr a L\nq1 _ qa b L";
+    fn valid_example_with_blank_lines_end() {
+        let test_string = "states 4\nq0\nq1\nqr -\nqa +\nalphabet 2 a b\nq0 a q0 a R\nq0 _ qr _ L\nq0 b q1 b R\nq1 a qr a L\nq1 b qr a L\nq1 _ qa b L\n\n";
         let result = parse(test_string.as_bytes().by_ref());
         let representation = result.expect("The parse should have succeded");
 
@@ -562,6 +593,17 @@ mod tests {
         assert!(result.is_err());
         match result {
             Err(ParsingError::States(StateError::MissingStateHeader)) => {}
+            _ => panic!("Invalid Enum Variant"),
+        }
+    }
+
+    #[test]
+    fn zero_alphabet_size() {
+        let test_string = "states 3\nI\nA -\nB +\nalphabet 0";
+        let result = parse(test_string.as_bytes().by_ref());
+        assert!(result.is_err());
+        match result {
+            Err(ParsingError::Alphabet(AlphabetError::InvalidNumberOfElements(_))) => {}
             _ => panic!("Invalid Enum Variant"),
         }
     }

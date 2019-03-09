@@ -95,7 +95,7 @@ where
             .unwrap_or_else(|| {
                 Action::new(
                     self.representation.rejecting_state().clone(),
-                    '_',
+                    *input_char,
                     Motion::Left,
                 )
             });
@@ -121,8 +121,18 @@ where
     StateTy: StateTrait + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "Current State: {}", self.current_state)?;
-        self.tape.iter().for_each(|v| write!(f, "{}", v).unwrap());
+        let s = self
+            .tape
+            .iter()
+            .collect::<String>()
+            .trim_end_matches('_')
+            .to_string();
+        if s == "" {
+            writeln!(f, "_")?;
+            return Ok(());
+        }
+        writeln!(f, "{}", s)?;
+
         Ok(())
     }
 }

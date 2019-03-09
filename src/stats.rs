@@ -12,6 +12,8 @@ pub struct ExecutionResult<T: TuringMachine> {
 
     /// How many steps did it take to stop
     pub num_steps: usize,
+
+    pub tm: T,
 }
 
 /// A wrapper struct, which takes a [`TuringMachine`](trait.TuringMachine.html) and collects information about the number of steps it takes
@@ -32,7 +34,7 @@ impl<T: TuringMachine> TuringMachineStatsExt<T> {
     }
 
     /// Runs to completion, and returns the execution result associated with it
-    pub fn execute_and_get_result(&mut self) -> ExecutionResult<T> {
+    pub fn execute_and_get_result(mut self) -> ExecutionResult<T> {
         debug!("Starting Execution");
 
         let accepting = self.run();
@@ -40,6 +42,7 @@ impl<T: TuringMachine> TuringMachineStatsExt<T> {
             accepting,
             tape: self.tape().clone(),
             num_steps: self.get_number_of_steps(),
+            tm: self.tm,
         }
     }
 }

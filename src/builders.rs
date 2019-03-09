@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::io::{BufRead, BufReader, Read};
 
 // TODO, would it generally be worth to replace at least some of these with structs? Or do we need the full generality of the problem?
+// Todo, transitiontable builder is not generic over input types
 
 /// A trait to generally parse a transition table
 pub trait TransitionTableBuilder<StateTy>
@@ -28,7 +29,8 @@ where
         self.build_from_lines(r.lines().filter_map(|r| r.ok()))
     }
 
-    fn states(&self) -> Vec<StateTy>;
+    fn states(&self) -> HashSet<StateTy>;
+    fn alphabet(&self) -> HashSet<char>;
 
     /// Given a current state, what is the transitions that we can take?
     fn get_state_transitions(&self, state: &StateTy) -> Vec<(char, Action<StateTy>)>;
@@ -113,14 +115,12 @@ where
     /// Return `Some` if the builder is valid, `None` otherwise
     pub fn validate(self) -> Option<Self> {
         // If we haven't set this, it should return none
-        if self.repr.is_none() {
-            return None;
-        }
 
-        if self
-            .tape
-            .iter()
-            .any(|tape_elem| !self.repr.as_ref().unwrap().alphabet().contains(tape_elem))
+        if self.repr.is_none()
+            || self
+                .tape
+                .iter()
+                .any(|tape_elem| !self.repr.as_ref().unwrap().alphabet().contains(tape_elem))
         {
             None
         } else {

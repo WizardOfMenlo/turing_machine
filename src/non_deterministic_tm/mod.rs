@@ -10,6 +10,7 @@ use crate::{
 
 use representation::NonDeterministicMachineRepresentation;
 use std::collections::HashSet;
+use std::fmt;
 use std::iter;
 
 #[derive(Debug)]
@@ -165,5 +166,14 @@ where
             tapes: vec![tape],
             representation: repr,
         })
+    }
+}
+
+impl<StateTy> fmt::Display for NonDeterministicTuringMachine<StateTy>
+where
+    StateTy: StateTrait + fmt::Display,
+{
+    fn fmt(&self, _: &mut fmt::Formatter) -> fmt::Result {
+        Ok(())
     }
 }
