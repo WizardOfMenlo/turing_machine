@@ -1,5 +1,6 @@
 use crate::builders::TuringMachineBuilder;
 use crate::TuringMachine;
+use log::info;
 
 /// The result of a [`TuringMachine`](trait.TuringMachine.html) run
 pub struct ExecutionResult<T: TuringMachine> {
@@ -32,6 +33,8 @@ impl<T: TuringMachine> TuringMachineStatsExt<T> {
 
     /// Runs to completion, and returns the execution result associated with it
     pub fn execute_and_get_result(&mut self) -> ExecutionResult<T> {
+        info!("Starting Execution");
+
         let accepting = self.run();
         ExecutionResult {
             accepting,
@@ -52,11 +55,13 @@ impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {
     fn from_builder(
         builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>,
     ) -> Result<Self, Self::ErrorTy> {
+        info!("Constructing Machine");
         Ok(Self::new(T::from_builder(builder)?))
     }
 
     fn step(&mut self) {
-        self.num_steps.saturating_add(1);
+        self.num_steps = self.num_steps.saturating_add(1);
+        info!("Step #{}", self.num_steps);
         self.tm.step();
     }
 

@@ -146,6 +146,9 @@ fn main() {
         )
         .get_matches();
 
+    // Initialize the logger
+    env_logger::init();
+
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
     let tape_file = matches.value_of("tapefile");

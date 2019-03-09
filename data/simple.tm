@@ -1,6 +1,8 @@
 states 3
-S
-A +
-R -
-alphabet 2 0 1
-S _ A 0 L
+A
+B +
+F -
+alphabet 3 1 2 3
+A 1 A 2 R
+A 2 A 1 R
+A _ B _ L
