@@ -1,5 +1,6 @@
 use crate::builders::TuringMachineBuilder;
 use crate::TuringMachine;
+use log::info;
 
 /// The result of a [`TuringMachine`](trait.TuringMachine.html) run
 pub struct ExecutionResult<T: TuringMachine> {
@@ -32,6 +33,8 @@ impl<T: TuringMachine> TuringMachineStatsExt<T> {
 
     /// Runs to completion, and returns the execution result associated with it
     pub fn execute_and_get_result(&mut self) -> ExecutionResult<T> {
+        info!("Starting Execution");
+
         let accepting = self.run();
         ExecutionResult {
             accepting,
@@ -52,11 +55,13 @@ impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {
     fn from_builder(
         builder: TuringMachineBuilder<Self::StateTy, Self::ReprTy>,
     ) -> Result<Self, Self::ErrorTy> {
+        info!("Constructing Machine");
         Ok(Self::new(T::from_builder(builder)?))
     }
 
     fn step(&mut self) {
-        self.num_steps.saturating_add(1);
+        self.num_steps = self.num_steps.saturating_add(1);
+        info!("Step #{}", self.num_steps);
         self.tm.step();
     }
 
@@ -71,4 +76,42 @@ impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {
     fn is_rejecting(&self) -> bool {
         self.tm.is_rejecting()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::common::*;
+    use crate::mocking::MockMachine;
+
+    fn make_mock_machine<T>(t: Vec<char>) -> MockMachine<T>
+    where
+        T: StateTrait,
+    {
+        MockMachine {
+            p: Default::default(),
+            tape: t,
+        }
+    }
+
+    #[test]
+    fn check_initialization() {
+        let stats = TuringMachineStatsExt::new(());
+        assert_eq!(stats.get_number_of_steps(), 0);
+    }
+
+    #[test]
+    fn check_stepping() {
+        let mock = make_mock_machine::<usize>(vec!['1', '2', '3', '4']);
+        let mut stats = TuringMachineStatsExt::new(mock);
+
+        for i in 0..1000 {
+            assert_eq!(stats.is_accepting(), false);
+            assert_eq!(stats.is_rejecting(), false);
+            assert_eq!(stats.get_number_of_steps(), i);
+            assert_eq!(*stats.tape(), vec!['1', '2', '3', '4']);
+            stats.step();
+        }
+    }
+
 }

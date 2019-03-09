@@ -5,8 +5,7 @@ use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
 use std::collections::HashSet;
 
-/// TODO, check we can default construct properly
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct DeterministicMachineRepresentation<StateTy>
 where
     StateTy: StateTrait,

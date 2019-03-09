@@ -42,12 +42,17 @@ fn apply_action<StateTy>(
         tape.extend(new_section);
     }
 
+    // Write to cell
+    tape[*position] = *act.tape_output();
+
+    // New position
     match act.motion() {
         Motion::Right => *position += 1,
         Motion::Left => *position = position.saturating_sub(1),
         Motion::Stay => {}
     };
-    tape[*position] = *act.tape_output();
+
+    // New state
     *state = act.next_state().clone();
 }
 

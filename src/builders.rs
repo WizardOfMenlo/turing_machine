@@ -64,18 +64,6 @@ where
 }
 
 /// A builder struct for a [`TuringMachine`](trait.TuringMachine.html)  
-/// # Usage
-/// ```
-/// use turing_machine::{
-///     machine_representation::TmRepresentation,
-///     TuringMachine, TuringMachineBuilder, DeterministicTuringMachine,
-/// };
-///
-/// let tm : DeterministicTuringMachine = TuringMachineBuilder::new()
-///                 .representation(TmRepresentation::default())
-///                 .tape(Vec::new())
-///                 .into();
-/// ```
 #[derive(Debug, Default)]
 pub struct TuringMachineBuilder<StateTy, ReprTy>
 where
@@ -124,6 +112,11 @@ where
     /// This should be called on any conversion to avoid inconsistencies  
     /// Return `Some` if the builder is valid, `None` otherwise
     pub fn validate(self) -> Option<Self> {
+        // If we haven't set this, it should return none
+        if self.repr.is_none() {
+            return None;
+        }
+
         if self
             .tape
             .iter()
@@ -133,5 +126,59 @@ where
         } else {
             Some(self)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mocking::MockRepr;
+    use std::iter::FromIterator;
+
+    fn make_mock_repr<T>(v: Vec<char>) -> MockRepr<T>
+    where
+        T: StateTrait,
+    {
+        MockRepr {
+            p: Default::default(),
+            alphabet: HashSet::from_iter(v),
+        }
+    }
+
+    #[test]
+    fn check_initialization() {
+        let builder = TuringMachineBuilder::<String, ()>::new();
+        assert!(builder.validate().is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn check_panic_on_repr_non_set() {
+        let builder = TuringMachineBuilder::<usize, ()>::new();
+        builder.decompose();
+    }
+
+    #[test]
+    fn check_matching_alphabet_works() {
+        let t_vec = vec!['_', 'a', 'b', 'b', '_', 'a'];
+        let alpha_vec = vec!['_', 'a', 'b'];
+        let builder = TuringMachineBuilder::new()
+            .tape(t_vec.clone())
+            .repr(make_mock_repr::<String>(alpha_vec.clone()))
+            .validate()
+            .unwrap();
+
+        let (tape, repr) = builder.decompose();
+        assert_eq!(t_vec, tape);
+        assert_eq!(*repr.alphabet(), HashSet::from_iter(alpha_vec));
+    }
+
+    #[test]
+    fn check_non_matching_alphabet_does_not_work() {
+        let builder = TuringMachineBuilder::new()
+            .tape(vec!['_', 'a', '1', 'b', '_', 'a'])
+            .repr(make_mock_repr::<usize>(vec!['_', 'a', 'b']))
+            .validate();
+        assert!(builder.is_none());
     }
 }

@@ -15,6 +15,8 @@ use turing_machine::{
     TuringMachine,
 };
 
+/// TODO, simplify imports, coz they are hella ugly rn
+
 #[derive(Debug)]
 enum ErrorType<T>
 where
@@ -145,6 +147,9 @@ fn main() {
                 .help("Use a non deterministic TM"),
         )
         .get_matches();
+
+    // Initialize the logger
+    env_logger::init();
 
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
