@@ -64,18 +64,6 @@ where
 }
 
 /// A builder struct for a [`TuringMachine`](trait.TuringMachine.html)  
-/// # Usage
-/// ```
-/// use turing_machine::{
-///     machine_representation::TmRepresentation,
-///     TuringMachine, TuringMachineBuilder, DeterministicTuringMachine,
-/// };
-///
-/// let tm : DeterministicTuringMachine = TuringMachineBuilder::new()
-///                 .representation(TmRepresentation::default())
-///                 .tape(Vec::new())
-///                 .into();
-/// ```
 #[derive(Debug, Default)]
 pub struct TuringMachineBuilder<StateTy, ReprTy>
 where

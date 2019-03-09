@@ -36,12 +36,17 @@ where
             self.tape.extend(new_section);
         }
 
+        // Write to tape
+        self.tape[self.current_cell] = *act.tape_output();
+
+        // Move
         match act.motion() {
             Motion::Right => self.current_cell += 1,
             Motion::Left => self.current_cell = self.current_cell.saturating_sub(1),
             Motion::Stay => {}
         };
-        self.tape[self.current_cell] = *act.tape_output();
+
+        // Switch state
         self.current_state = act.next_state().clone();
     }
 }
