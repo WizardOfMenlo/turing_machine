@@ -8,7 +8,7 @@ pub mod mocking;
 pub mod non_deterministic_tm;
 pub mod stats;
 pub mod transition_table;
-pub(crate) mod utils;
+pub mod utils;
 
 use crate::builders::TuringMachineBuilder;
 use crate::common::StateTrait;

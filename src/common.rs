@@ -59,7 +59,7 @@ impl<T> Action<T>
 where
     T: StateTrait,
 {
-    pub(crate) fn new(next_state: T, tape_output: char, motion: Motion) -> Self {
+    pub fn new(next_state: T, tape_output: char, motion: Motion) -> Self {
         Action {
             next_state,
             tape_output,

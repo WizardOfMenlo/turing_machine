@@ -475,7 +475,7 @@ mod tests {
     }
 
     #[test]
-    fn valid_example1() {
+    fn valid_example() {
         let test_string = "states 4\ns0\ns1\ns2 +\nqr -\nalphabet 2 a b\ns0 a s0 a R\ns0 b s1 b R\ns0 _ s2 _ S\ns1 b s1 b R\ns1 _ s2 _ S";
         let result = parse(test_string.as_bytes().by_ref());
         let representation = result.expect("The parse should have succeded");
@@ -502,7 +502,7 @@ mod tests {
         assert!(alphabet.contains(&'b'));
 
         let transitions_builder = representation.transition_table_builder();
-        assert_eq!(transitions_builder.states().len(), 2);
+        assert_eq!(transitions_builder.states().len(), 3);
 
         let transitions = build_map(transitions_builder);
 
@@ -557,7 +557,7 @@ mod tests {
         assert!(alphabet.contains(&'b'));
 
         let transitions_builder = representation.transition_table_builder();
-        assert_eq!(transitions_builder.states().len(), 2);
+        assert_eq!(transitions_builder.states().len(), 4);
 
         let transitions = build_map(transitions_builder);
         let q0_actions = transitions.get("q0").expect("State not parsed");
