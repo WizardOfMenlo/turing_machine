@@ -8,6 +8,7 @@ use crate::{
     TuringMachine, TuringMachineBuilder,
 };
 
+use log::debug;
 use representation::DeterministicMachineRepresentation;
 
 use std::{fmt, iter};
@@ -88,6 +89,11 @@ where
         }
 
         let input_char = self.tape.get(self.current_cell).unwrap_or(&'_');
+
+        debug!(
+            "Read {} while in state {:?}",
+            input_char, self.current_state
+        );
         let action = self
             .representation
             .transition_table()
