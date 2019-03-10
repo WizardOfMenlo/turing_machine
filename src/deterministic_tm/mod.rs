@@ -37,6 +37,7 @@ where
             self.tape.extend(new_section);
         }
 
+        debug!("Writing to tape {}", act.tape_output());
         // Write to tape
         self.tape[self.current_cell] = *act.tape_output();
 

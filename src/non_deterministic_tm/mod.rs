@@ -8,6 +8,7 @@ use crate::{
     TuringMachine, TuringMachineBuilder,
 };
 
+use log::debug;
 use representation::NonDeterministicMachineRepresentation;
 use std::collections::HashSet;
 use std::fmt;
@@ -94,6 +95,8 @@ where
             let char_on_tape = corresponding_tape
                 .get(*corresponding_position)
                 .unwrap_or(&'_');
+
+            debug!("Read {} while in state {:?}", char_on_tape, state);
 
             let possible_actions = self
                 .representation

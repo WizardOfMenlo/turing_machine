@@ -1,4 +1,4 @@
-states 34
+states 39
 start
 ??0
 ??1
@@ -31,11 +31,40 @@ B0
 B1
 BC
 C
+shift0
+shift1
+shift#
+toStart
+start0
 accept +
 reject -
 alphabet 5 0 1 # $ ^
 start 0 0?0 ^ R
 start 1 1?0 ^ R
+start # shift# ^ R
+
+shift0 0 shift0 0 R
+shift0 1 shift1 0 R
+shift0 # shift# 0 R
+shift0 _ toStart 0 L
+
+shift1 0 shift0 1 R
+shift1 1 shift1 1 R
+shift1 # shift# 1 R
+shift1 _ toStart 1 L
+
+
+shift# 0 shift0 # R
+shift# 1 shift1 # R
+shift# # shift# # R
+shift# _ toStart # L
+
+toStart 0 toStart 0 L
+toStart 1 toStart 1 L
+toStart # toStart # L
+toStart ^ start0 ^ S
+
+start0 ^ 0?0 ^ R
 
 ??0 0 0?0 $ R
 ??0 1 1?0 $ R

@@ -20,17 +20,23 @@ where
 }
 
 #[derive(Debug)]
-pub enum RepresentationCreationError {
+pub enum RepresentationCreationError<StateTy>
+where
+    StateTy: StateTrait,
+{
     StartingStateNotSpecified,
     AcceptStateNotSpecified,
     RejectStateNotSpecified,
     // TODO, add more info on this
-    TransitionTableStateMismatch,
-    TransitionTableAlphabetMismatch,
+    TransitionTableStateMismatch(HashSet<StateTy>),
+    TransitionTableAlphabetMismatch(HashSet<char>),
     TableConstructionError(TableCreationError),
 }
 
-impl From<TableCreationError> for RepresentationCreationError {
+impl<StateTy> From<TableCreationError> for RepresentationCreationError<StateTy>
+where
+    StateTy: StateTrait,
+{
     fn from(t: TableCreationError) -> Self {
         RepresentationCreationError::TableConstructionError(t)
     }
@@ -43,7 +49,7 @@ where
     type InputTy = char;
     type OutputTy = HashSet<Action<StateTy>>;
     type TableTy = NonDeterministicTransitionTable<StateTy>;
-    type ErrorTy = RepresentationCreationError;
+    type ErrorTy = RepresentationCreationError<StateTy>;
 
     fn states(&self) -> &HashSet<StateTy> {
         &self.states
@@ -89,24 +95,27 @@ where
             .cloned()
             .ok_or(RepresentationCreationError::RejectStateNotSpecified)?;
 
-        // Validate states
-        if !b
+        let state_diff: HashSet<_> = b
             .transition_table_builder()
             .states()
-            .iter()
-            .all(|s| b.states().contains(s))
-        {
-            return Err(RepresentationCreationError::TransitionTableStateMismatch);
+            .difference(&b.states())
+            .cloned()
+            .collect();
+        if !state_diff.is_empty() {
+            return Err(RepresentationCreationError::TransitionTableStateMismatch(
+                state_diff,
+            ));
         }
 
         // Validate alphabet
-        if !b
+        let alpha_diff: HashSet<_> = b
             .transition_table_builder()
             .alphabet()
-            .iter()
-            .all(|c| b.alphabet().contains(c))
-        {
-            return Err(RepresentationCreationError::TransitionTableAlphabetMismatch);
+            .difference(&b.alphabet())
+            .cloned()
+            .collect::<HashSet<_>>();
+        if !alpha_diff.is_empty() {
+            return Err(RepresentationCreationError::TransitionTableAlphabetMismatch(alpha_diff));
         }
 
         let transition_table =
