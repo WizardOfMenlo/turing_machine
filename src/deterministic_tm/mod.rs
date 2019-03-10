@@ -11,7 +11,7 @@ use crate::{
 use log::debug;
 use representation::DeterministicMachineRepresentation;
 
-use std::{fmt, iter};
+use std::fmt;
 
 /// Struct representing a TM with deterministic behaviour, singly infinite tape and variable alphabet  
 /// This is (almost) the most basic TM that one can conceive.
@@ -24,33 +24,6 @@ where
     representation: DeterministicMachineRepresentation<StateTy>,
     current_cell: usize,
     current_state: StateTy,
-}
-
-impl<StateTy> DeterministicTuringMachine<StateTy>
-where
-    StateTy: StateTrait,
-{
-    fn apply_action(&mut self, act: &Action<StateTy>) {
-        // Bound checks
-        if self.current_cell + 1 >= self.tape.len() {
-            let new_section = iter::repeat('_').take(self.tape.len() + 2);
-            self.tape.extend(new_section);
-        }
-
-        debug!("Writing to tape {}", act.tape_output());
-        // Write to tape
-        self.tape[self.current_cell] = *act.tape_output();
-
-        // Move
-        match act.motion() {
-            Motion::Right => self.current_cell += 1,
-            Motion::Left => self.current_cell = self.current_cell.saturating_sub(1),
-            Motion::Stay => {}
-        };
-
-        // Switch state
-        self.current_state = act.next_state().clone();
-    }
 }
 
 #[derive(Debug)]
@@ -107,7 +80,12 @@ where
                 )
             });
 
-        self.apply_action(&action);
+        crate::utils::apply_action(
+            action,
+            &mut self.tape,
+            &mut self.current_cell,
+            &mut self.current_state,
+        );
     }
 
     fn tape(&self) -> &Self::Tape {
