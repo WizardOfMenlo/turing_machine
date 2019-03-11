@@ -1,4 +1,3 @@
-pub mod representation;
 pub mod transition_table;
 
 use crate::{
@@ -6,10 +5,14 @@ use crate::{
     transition_table::TransitionTable, utils::apply_action, TuringMachine, TuringMachineBuilder,
 };
 
+use crate::common::representation::GeneralMachineRepresentation;
 use log::debug;
-use representation::NonDeterministicMachineRepresentation;
 use std::collections::HashSet;
 use std::fmt;
+use transition_table::NonDeterministicTransitionTable;
+
+pub type NonDeterministicMachineRepresentation<StateTy> =
+    GeneralMachineRepresentation<StateTy, NonDeterministicTransitionTable<StateTy>>;
 
 #[derive(Debug)]
 pub struct NonDeterministicTuringMachine<StateTy>

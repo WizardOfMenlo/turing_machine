@@ -1,53 +1,47 @@
-use super::transition_table::{DeterministicTransitionTable, TableCreationError};
 use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
-use crate::common::{Action, StateTrait};
+use crate::common::StateTrait;
 use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
 use std::collections::HashSet;
 
 #[derive(Debug)]
-pub struct DeterministicMachineRepresentation<StateTy>
+pub struct GeneralMachineRepresentation<StateTy, TableTy>
 where
     StateTy: StateTrait,
+    TableTy: TransitionTable<StateTy, InputTy = char> + std::fmt::Debug,
 {
     states: HashSet<StateTy>,
     starting_state: StateTy,
     accepting_state: StateTy,
     rejecting_state: StateTy,
     alphabet: HashSet<char>,
-    transition_table: DeterministicTransitionTable<StateTy>,
+    transition_table: TableTy,
 }
 
 #[derive(Debug)]
-pub enum RepresentationCreationError<StateTy>
+pub enum RepresentationCreationError<StateTy, TableTy>
 where
     StateTy: StateTrait,
+    TableTy: TransitionTable<StateTy, InputTy = char> + std::fmt::Debug,
 {
     StartingStateNotSpecified,
     AcceptStateNotSpecified,
     RejectStateNotSpecified,
     TransitionTableStateMismatch(HashSet<StateTy>),
     TransitionTableAlphabetMismatch(HashSet<char>),
-    TableConstructionError(TableCreationError),
+    TableConstructionError(TableTy::ErrorTy),
 }
 
-impl<StateTy> From<TableCreationError> for RepresentationCreationError<StateTy>
+impl<StateTy, TableTy> MachineRepresentation<StateTy>
+    for GeneralMachineRepresentation<StateTy, TableTy>
 where
     StateTy: StateTrait,
-{
-    fn from(t: TableCreationError) -> Self {
-        RepresentationCreationError::TableConstructionError(t)
-    }
-}
-
-impl<StateTy> MachineRepresentation<StateTy> for DeterministicMachineRepresentation<StateTy>
-where
-    StateTy: StateTrait,
+    TableTy: TransitionTable<StateTy, InputTy = char> + std::fmt::Debug,
 {
     type InputTy = char;
-    type OutputTy = Action<StateTy>;
-    type TableTy = DeterministicTransitionTable<StateTy>;
-    type ErrorTy = RepresentationCreationError<StateTy>;
+    type OutputTy = TableTy::OutputTy;
+    type TableTy = TableTy;
+    type ErrorTy = RepresentationCreationError<StateTy, TableTy>;
 
     fn states(&self) -> &HashSet<StateTy> {
         &self.states
@@ -118,10 +112,10 @@ where
             return Err(RepresentationCreationError::TransitionTableAlphabetMismatch(alpha_diff));
         }
 
-        let transition_table =
-            DeterministicTransitionTable::from_builder(b.transition_table_builder())?;
+        let transition_table = TableTy::from_builder(b.transition_table_builder())
+            .map_err(RepresentationCreationError::TableConstructionError)?;
 
-        Ok(Self {
+        Ok(GeneralMachineRepresentation {
             states: b.states().clone(),
             starting_state,
             accepting_state,

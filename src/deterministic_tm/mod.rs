@@ -1,4 +1,3 @@
-pub mod representation;
 pub mod transition_table;
 
 use crate::{
@@ -9,8 +8,12 @@ use crate::{
     TuringMachine, TuringMachineBuilder,
 };
 
+use crate::common::representation::GeneralMachineRepresentation;
 use log::debug;
-use representation::DeterministicMachineRepresentation;
+use transition_table::DeterministicTransitionTable;
+
+pub type DeterministicMachineRepresentation<StateTy> =
+    GeneralMachineRepresentation<StateTy, DeterministicTransitionTable<StateTy>>;
 
 use std::fmt;
 

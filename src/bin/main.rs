@@ -7,12 +7,8 @@ use turing_machine::builders::TuringMachineBuilder;
 use turing_machine::machine_parser::{self, ParsingError};
 use turing_machine::machine_representation::MachineRepresentation;
 use turing_machine::{
-    deterministic_tm::{
-        representation::DeterministicMachineRepresentation, DeterministicTuringMachine,
-    },
-    non_deterministic_tm::{
-        representation::NonDeterministicMachineRepresentation, NonDeterministicTuringMachine,
-    },
+    deterministic_tm::{DeterministicMachineRepresentation, DeterministicTuringMachine},
+    non_deterministic_tm::{NonDeterministicMachineRepresentation, NonDeterministicTuringMachine},
     stats::{ExecutionResult, TuringMachineStatsExt},
     TuringMachine,
 };

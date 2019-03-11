@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
+pub mod representation;
+
 pub trait StateTrait: Debug + Clone + Default + Eq + Hash {}
 impl<T> StateTrait for T where T: Debug + Clone + Default + Eq + Hash {}
 
