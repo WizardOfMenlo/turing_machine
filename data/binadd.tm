@@ -1,4 +1,4 @@
-states 45
+states 48
 start
 ??0
 ??1
@@ -40,6 +40,9 @@ C
 shift0
 shift1
 shift#
+shiftSecond0
+shiftSecond1
+shiftSecond#
 toStart
 start0
 accept +
@@ -51,19 +54,30 @@ start # shift# ^ R
 
 shift0 0 shift0 0 R
 shift0 1 shift1 0 R
-shift0 # shift# 0 R
-shift0 _ toStart 0 L
+shift0 # shiftSecond# 0 R
 
 shift1 0 shift0 1 R
 shift1 1 shift1 1 R
-shift1 # shift# 1 R
-shift1 _ toStart 1 L
-
+shift1 # shiftSecond# 1 R
 
 shift# 0 shift0 # R
 shift# 1 shift1 # R
-shift# # shift# # R
-shift# _ toStart # L
+shift# # shiftSecond# # R
+
+shiftSecond0 0 shiftSecond0 0 R
+shiftSecond0 1 shiftSecond1 0 R
+shiftSecond0 # shiftSecond# 0 R
+shiftSecond0 _ toStart 0 L
+
+shiftSecond1 0 shiftSecond0 1 R
+shiftSecond1 1 shiftSecond1 1 R
+shiftSecond1 # shiftSecond# 1 R
+shiftSecond1 _ toStart 1 L
+
+shiftSecond# 0 shiftSecond0 # R
+shiftSecond# 1 shiftSecond1 # R
+shiftSecond# # shiftSecond# # R
+shiftSecond# _ toStart # L
 
 toStart 0 toStart 0 L
 toStart 1 toStart 1 L
