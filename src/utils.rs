@@ -1,5 +1,6 @@
-use crate::common::*;
 use std::iter;
+
+use crate::common::{Action, Motion, StateTrait};
 
 /// Type that cannot be instantiated (like `!`)
 #[derive(Debug)]

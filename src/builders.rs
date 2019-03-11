@@ -1,7 +1,10 @@
-use crate::common::*;
-use crate::machine_representation::MachineRepresentation;
 use hashbrown::HashSet;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{self, BufRead, BufReader, Read};
+
+use crate::{
+    common::{Action, State, StateTrait},
+    machine_representation::MachineRepresentation,
+};
 
 // TODO, would it generally be worth to replace at least some of these with structs? Or do we need the full generality of the problem?
 
@@ -11,7 +14,7 @@ where
     StateTy: StateTrait,
 {
     type InputTy;
-    type ErrorTy: From<std::io::Error>;
+    type ErrorTy: From<io::Error>;
 
     fn parse_line(&mut self, line: &str) -> Result<(), Self::ErrorTy>;
     fn build_from_lines(
@@ -75,7 +78,6 @@ where
 {
     tape: Vec<ReprTy::InputTy>,
     repr: Option<ReprTy>,
-    marker: std::marker::PhantomData<StateTy>,
 }
 
 impl<StateTy, ReprTy> TuringMachineBuilder<StateTy, ReprTy>
@@ -90,7 +92,6 @@ where
         TuringMachineBuilder {
             tape: Vec::new(),
             repr: None,
-            marker: Default::default(),
         }
     }
 

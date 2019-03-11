@@ -1,10 +1,11 @@
-use crate::common::Action;
 use hashbrown::{HashMap, HashSet};
 
-use crate::builders::TransitionTableBuilder;
-use crate::common::StateTrait;
-use crate::transition_table::TransitionTable;
-use crate::utils::Never;
+use crate::{
+    builders::TransitionTableBuilder,
+    common::{Action, StateTrait},
+    transition_table::TransitionTable,
+    utils::Never,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct NonDeterministicTransitionTable<StateTy>

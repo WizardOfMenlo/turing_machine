@@ -1,12 +1,11 @@
-use crate::builders::MachineRepresentationBuilder;
-use crate::builders::TransitionTableBuilder;
-use crate::transition_table::TransitionTable;
-use std::fmt::Debug;
-
 use hashbrown::HashSet;
+use std::{fmt::Debug, hash::Hash};
 
-use crate::common::StateTrait;
-use std::hash::Hash;
+use crate::{
+    builders::{MachineRepresentationBuilder, TransitionTableBuilder},
+    common::StateTrait,
+    transition_table::TransitionTable,
+};
 
 /// The representation of a Turing Machine. Note that, as from lecture, the only difference is in the Function (aka the [`TransitionTable`](../transition_table/trait.TransitionTable.html))  
 pub trait MachineRepresentation<StateTy>: Sized

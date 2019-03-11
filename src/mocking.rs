@@ -1,11 +1,13 @@
-use crate::builders::*;
-use crate::common::StateTrait;
-use crate::machine_representation::MachineRepresentation;
-use crate::transition_table::TransitionTable;
-use crate::TuringMachine;
-
 use hashbrown::HashSet;
 use std::marker::PhantomData;
+
+use crate::{
+    builders::{MachineRepresentationBuilder, TransitionTableBuilder, TuringMachineBuilder},
+    common::StateTrait,
+    machine_representation::MachineRepresentation,
+    transition_table::TransitionTable,
+    TuringMachine,
+};
 
 // A collection of implementations to help testing
 

@@ -1,21 +1,19 @@
 pub mod transition_table;
 
+use log::debug;
+use std::fmt;
+use transition_table::DeterministicTransitionTable;
+
 use crate::{
-    common::{Action, Motion, StateTrait},
+    common::{representation::GeneralMachineRepresentation, Action, Motion, StateTrait},
     machine_representation::MachineRepresentation,
     transition_table::TransitionTable,
     utils::apply_action,
     TuringMachine, TuringMachineBuilder,
 };
 
-use crate::common::representation::GeneralMachineRepresentation;
-use log::debug;
-use transition_table::DeterministicTransitionTable;
-
 pub type DeterministicMachineRepresentation<StateTy> =
     GeneralMachineRepresentation<StateTy, DeterministicTransitionTable<StateTy>>;
-
-use std::fmt;
 
 /// Struct representing a TM with deterministic behaviour, singly infinite tape and variable alphabet  
 /// This is (almost) the most basic TM that one can conceive.

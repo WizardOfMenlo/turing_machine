@@ -1,10 +1,11 @@
 use hashbrown::{HashMap, HashSet};
+use lazy_static::lazy_static;
 use std::io::{self, BufRead, BufReader, Read};
 
-use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
-use crate::common::*;
-
-use lazy_static::lazy_static;
+use crate::{
+    builders::{MachineRepresentationBuilder, TransitionTableBuilder},
+    common::{Action, Motion, State},
+};
 
 /// A Error type for errors returned by [`parse`](fn.parse.html).  
 /// Each variant expresses a particular error type and can be used to diagnose format mistakes

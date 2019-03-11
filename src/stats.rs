@@ -1,6 +1,7 @@
+use log::debug;
+
 use crate::builders::TuringMachineBuilder;
 use crate::TuringMachine;
-use log::debug;
 
 /// The result of a [`TuringMachine`](trait.TuringMachine.html) run
 pub struct ExecutionResult<T: TuringMachine> {

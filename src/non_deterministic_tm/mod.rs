@@ -1,15 +1,17 @@
 pub mod transition_table;
 
-use crate::{
-    common::StateTrait, machine_representation::MachineRepresentation,
-    transition_table::TransitionTable, utils::apply_action, TuringMachine, TuringMachineBuilder,
-};
-
-use crate::common::representation::GeneralMachineRepresentation;
 use hashbrown::HashSet;
 use log::debug;
 use std::fmt;
 use transition_table::NonDeterministicTransitionTable;
+
+use crate::{
+    common::{representation::GeneralMachineRepresentation, StateTrait},
+    machine_representation::MachineRepresentation,
+    transition_table::TransitionTable,
+    utils::apply_action,
+    TuringMachine, TuringMachineBuilder,
+};
 
 pub type NonDeterministicMachineRepresentation<StateTy> =
     GeneralMachineRepresentation<StateTy, NonDeterministicTransitionTable<StateTy>>;

@@ -1,9 +1,10 @@
-use crate::common::Action;
 use hashbrown::HashMap;
+use std::fmt::Debug;
 
-use crate::builders::TransitionTableBuilder;
-use crate::common::StateTrait;
-use crate::transition_table::TransitionTable;
+use crate::{
+    builders::TransitionTableBuilder, common::Action, common::StateTrait,
+    transition_table::TransitionTable,
+};
 
 /// The Transition table for a [`DeterministicTuringMachine`](../struct.TuringMachine.html)
 #[derive(Debug, Clone, Default)]
@@ -17,7 +18,7 @@ where
 #[derive(Debug)]
 pub enum TableCreationError<StateTy>
 where
-    StateTy: std::fmt::Debug,
+    StateTy: Debug,
 {
     DuplicateTransition((StateTy, char)),
 }

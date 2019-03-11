@@ -10,11 +10,12 @@ pub mod stats;
 pub mod transition_table;
 pub mod utils;
 
-use crate::builders::TuringMachineBuilder;
-use crate::common::StateTrait;
-use crate::machine_representation::MachineRepresentation;
-
 use std::fmt::Debug;
+
+use crate::{
+    builders::TuringMachineBuilder, common::StateTrait,
+    machine_representation::MachineRepresentation,
+};
 
 /// A trait encapsulating the behavior of a general TM
 /// Should be general enough to account for [`DeterministicTuringMachine`](struct.DeterministicTuringMachine.html), k-tape machines, NDTMs and so on

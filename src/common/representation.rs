@@ -1,14 +1,18 @@
-use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
-use crate::common::StateTrait;
-use crate::machine_representation::MachineRepresentation;
-use crate::transition_table::TransitionTable;
 use hashbrown::HashSet;
+use std::fmt::Debug;
+
+use crate::{
+    builders::{MachineRepresentationBuilder, TransitionTableBuilder},
+    common::StateTrait,
+    machine_representation::MachineRepresentation,
+    transition_table::TransitionTable,
+};
 
 #[derive(Debug)]
 pub struct GeneralMachineRepresentation<StateTy, TableTy>
 where
     StateTy: StateTrait,
-    TableTy: TransitionTable<StateTy, InputTy = char> + std::fmt::Debug,
+    TableTy: TransitionTable<StateTy, InputTy = char> + Debug,
 {
     states: HashSet<StateTy>,
     starting_state: StateTy,
@@ -22,7 +26,7 @@ where
 pub enum RepresentationCreationError<StateTy, TableTy>
 where
     StateTy: StateTrait,
-    TableTy: TransitionTable<StateTy, InputTy = char> + std::fmt::Debug,
+    TableTy: TransitionTable<StateTy, InputTy = char> + Debug,
 {
     StartingStateNotSpecified,
     AcceptStateNotSpecified,
@@ -36,7 +40,7 @@ impl<StateTy, TableTy> MachineRepresentation<StateTy>
     for GeneralMachineRepresentation<StateTy, TableTy>
 where
     StateTy: StateTrait,
-    TableTy: TransitionTable<StateTy, InputTy = char> + std::fmt::Debug,
+    TableTy: TransitionTable<StateTy, InputTy = char> + Debug,
 {
     type InputTy = char;
     type OutputTy = TableTy::OutputTy;

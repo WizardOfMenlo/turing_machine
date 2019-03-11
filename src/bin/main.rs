@@ -1,19 +1,21 @@
 use clap::{App, Arg};
 use log::{debug, error, info};
-use std::fmt::Display;
-use std::fs::File;
-use std::io::{self, Read};
-use turing_machine::builders::TuringMachineBuilder;
-use turing_machine::machine_parser::{self, ParsingError};
-use turing_machine::machine_representation::MachineRepresentation;
+use std::{
+    fmt::Display,
+    fs::File,
+    io::{self, Read},
+    process,
+};
+
 use turing_machine::{
+    builders::TuringMachineBuilder,
     deterministic_tm::{DeterministicMachineRepresentation, DeterministicTuringMachine},
+    machine_parser::{self, ParsingError},
+    machine_representation::MachineRepresentation,
     non_deterministic_tm::{NonDeterministicMachineRepresentation, NonDeterministicTuringMachine},
     stats::{ExecutionResult, TuringMachineStatsExt},
     TuringMachine,
 };
-
-/// TODO, simplify imports, coz they are hella ugly rn
 
 #[derive(Debug)]
 enum ErrorType<T>
@@ -188,5 +190,5 @@ fn main() {
         _ => {}
     }
 
-    std::process::exit(exit_code);
+    process::exit(exit_code);
 }

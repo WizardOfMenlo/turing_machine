@@ -7,9 +7,9 @@
 //!
 //! Furthermore, we add an `Option` to the return type to allow for shortand specifications
 
-use crate::builders::TransitionTableBuilder;
-use crate::common::StateTrait;
 use std::fmt::Debug;
+
+use crate::{builders::TransitionTableBuilder, common::StateTrait};
 
 /// Trait Encapsulating a Transition table for a [`TuringMachine`](../trait.TuringMachine.html)  
 /// Functionally speaking, it represents: `F: (StateTy x InputTy) -> OutputTy`
