@@ -2,7 +2,7 @@ use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
 use crate::common::StateTrait;
 use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
-use std::collections::HashSet;
+use hashbrown::HashSet;
 
 #[derive(Debug)]
 pub struct GeneralMachineRepresentation<StateTy, TableTy>

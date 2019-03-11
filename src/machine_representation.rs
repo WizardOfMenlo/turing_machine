@@ -3,7 +3,7 @@ use crate::builders::TransitionTableBuilder;
 use crate::transition_table::TransitionTable;
 use std::fmt::Debug;
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 
 use crate::common::StateTrait;
 

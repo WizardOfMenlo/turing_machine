@@ -1,5 +1,5 @@
 use crate::common::Action;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use crate::builders::TransitionTableBuilder;
 use crate::common::StateTrait;

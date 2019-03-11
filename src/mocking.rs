@@ -4,7 +4,7 @@ use crate::machine_representation::MachineRepresentation;
 use crate::transition_table::TransitionTable;
 use crate::TuringMachine;
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 use std::marker::PhantomData;
 
 // A collection of implementations to help testing

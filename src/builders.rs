@@ -1,6 +1,6 @@
 use crate::common::*;
 use crate::machine_representation::MachineRepresentation;
-use std::collections::HashSet;
+use hashbrown::HashSet;
 use std::io::{BufRead, BufReader, Read};
 
 // TODO, would it generally be worth to replace at least some of these with structs? Or do we need the full generality of the problem?

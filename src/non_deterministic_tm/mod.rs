@@ -6,8 +6,8 @@ use crate::{
 };
 
 use crate::common::representation::GeneralMachineRepresentation;
+use hashbrown::HashSet;
 use log::debug;
-use std::collections::HashSet;
 use std::fmt;
 use transition_table::NonDeterministicTransitionTable;
 

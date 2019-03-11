@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use hashbrown::{HashMap, HashSet};
 use std::io::{self, BufRead, BufReader, Read};
 
 use crate::builders::{MachineRepresentationBuilder, TransitionTableBuilder};
