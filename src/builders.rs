@@ -30,7 +30,7 @@ where
     }
 
     fn states(&self) -> HashSet<StateTy>;
-    fn alphabet(&self) -> HashSet<char>;
+    fn alphabet(&self) -> HashSet<Self::InputTy>;
 
     /// Given a current state, what is the transitions that we can take?
     fn get_state_transitions(&self, state: &StateTy) -> Vec<(Self::InputTy, Action<StateTy>)>;
@@ -41,7 +41,6 @@ where
     StateTy: StateTrait,
 {
     type TableBuilder: TransitionTableBuilder<StateTy>;
-
     type ErrorTy;
 
     fn add_state(&mut self, state: StateTy, value: State) -> Result<(), Self::ErrorTy>;
@@ -59,7 +58,9 @@ where
     fn rejecting_state(&self) -> &Option<StateTy>;
 
     /// Get the alphabet
-    fn alphabet(&self) -> &HashSet<char>;
+    fn alphabet(
+        &self,
+    ) -> &HashSet<<Self::TableBuilder as TransitionTableBuilder<StateTy>>::InputTy>;
 
     /// Get the transition table
     fn transition_table_builder(&self) -> &Self::TableBuilder;
@@ -72,7 +73,7 @@ where
     StateTy: StateTrait,
     ReprTy: MachineRepresentation<StateTy>,
 {
-    tape: Vec<char>,
+    tape: Vec<ReprTy::InputTy>,
     repr: Option<ReprTy>,
     marker: std::marker::PhantomData<StateTy>,
 }
@@ -94,7 +95,7 @@ where
     }
 
     /// Sets the tape of the builder.  
-    pub fn tape(mut self, tape: Vec<char>) -> Self {
+    pub fn tape(mut self, tape: Vec<ReprTy::InputTy>) -> Self {
         self.tape = tape;
         self
     }
@@ -106,7 +107,7 @@ where
     }
 
     /// Convert the builder in a format easy to consume
-    pub fn decompose(self) -> (Vec<char>, ReprTy) {
+    pub fn decompose(self) -> (Vec<ReprTy::InputTy>, ReprTy) {
         (self.tape, self.repr.unwrap())
     }
 

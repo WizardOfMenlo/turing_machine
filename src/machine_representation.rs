@@ -6,6 +6,7 @@ use std::fmt::Debug;
 use hashbrown::HashSet;
 
 use crate::common::StateTrait;
+use std::hash::Hash;
 
 /// The representation of a Turing Machine. Note that, as from lecture, the only difference is in the Function (aka the [`TransitionTable`](../transition_table/trait.TransitionTable.html))  
 pub trait MachineRepresentation<StateTy>: Sized
@@ -13,7 +14,7 @@ where
     StateTy: StateTrait,
 {
     /// The `InputTy` of the underlying `TransitionTable`
-    type InputTy;
+    type InputTy: Eq + Hash;
 
     /// The `OutputTy` of the underlying `TransitionTable`
     type OutputTy;
@@ -37,7 +38,7 @@ where
     fn rejecting_state(&self) -> &StateTy;
 
     /// Get the alphabet
-    fn alphabet(&self) -> &HashSet<char>;
+    fn alphabet(&self) -> &HashSet<Self::InputTy>;
 
     /// Get the transition table
     fn transition_table(&self) -> &Self::TableTy;

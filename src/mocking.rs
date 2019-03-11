@@ -59,7 +59,7 @@ mod unit_impls {
             unreachable!()
         }
 
-        fn alphabet(&self) -> &HashSet<char> {
+        fn alphabet(&self) -> &HashSet<()> {
             unreachable!()
         }
 
@@ -157,9 +157,9 @@ impl<T> MachineRepresentation<T> for MockRepr<T>
 where
     T: StateTrait,
 {
-    type InputTy = ();
+    type InputTy = char;
     type OutputTy = ();
-    type TableTy = ();
+    type TableTy = MockTable<T>;
     type ErrorTy = ();
 
     fn states(&self) -> &HashSet<T> {
@@ -190,6 +190,38 @@ where
     where
         Builder: MachineRepresentationBuilder<T>,
         Builder::TableBuilder: TransitionTableBuilder<T>,
+    {
+        unreachable!()
+    }
+}
+
+pub(crate) struct MockTable<T>
+where
+    T: StateTrait,
+{
+    pub(crate) p: PhantomData<T>,
+}
+
+impl<T> TransitionTable<T> for MockTable<T>
+where
+    T: StateTrait,
+{
+    type InputTy = char;
+
+    type OutputTy = ();
+
+    type ErrorTy = ();
+
+    fn apply_transition_table(&self, _: &T, _: Self::InputTy) -> Option<Self::OutputTy> {
+        unreachable!()
+    }
+
+    /// Construct from a [`TransitionTableBuilder`](../builders/trait.TransitionTableBuilder.html)  
+    /// Note that the `InputTy` and `OutputTy` need to match
+    /// `Option<T>` in order to account for invalid parsing
+    fn from_builder<Builder>(_: &Builder) -> Result<Self, Self::ErrorTy>
+    where
+        Builder: TransitionTableBuilder<T, InputTy = Self::InputTy>,
     {
         unreachable!()
     }
