@@ -4,6 +4,7 @@ use hashbrown::{HashMap, HashSet};
 use crate::builders::TransitionTableBuilder;
 use crate::common::StateTrait;
 use crate::transition_table::TransitionTable;
+use crate::utils::Never;
 
 #[derive(Debug, Clone, Default)]
 pub struct NonDeterministicTransitionTable<StateTy>
@@ -13,18 +14,15 @@ where
     transitions: HashMap<(StateTy, char), HashSet<Action<StateTy>>>,
 }
 
-#[derive(Debug)]
-pub enum TableCreationError {
-    DuplicateState,
-}
-
 impl<StateTy> TransitionTable<StateTy> for NonDeterministicTransitionTable<StateTy>
 where
     StateTy: StateTrait,
 {
     type InputTy = char;
     type OutputTy = HashSet<Action<StateTy>>;
-    type ErrorTy = TableCreationError;
+
+    // Ideally I would use !, but it is experimental
+    type ErrorTy = Never;
 
     fn apply_transition_table(
         &self,

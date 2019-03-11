@@ -1,6 +1,10 @@
 use crate::common::*;
 use std::iter;
 
+/// Type that cannot be instantiated (like `!`)
+#[derive(Debug)]
+pub enum Never {}
+
 pub fn apply_action<StateTy>(
     act: Action<StateTy>,
     tape: &mut Vec<char>,
@@ -12,6 +16,7 @@ pub fn apply_action<StateTy>(
     // Bound checks
     if *position + 1 >= tape.len() {
         let new_section = iter::repeat('_').take(tape.len() + 2);
+        tape.reserve(tape.len() + 2);
         tape.extend(new_section);
     }
 
