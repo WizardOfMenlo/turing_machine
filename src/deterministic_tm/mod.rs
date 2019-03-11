@@ -5,6 +5,7 @@ use crate::{
     common::{Action, Motion, StateTrait},
     machine_representation::MachineRepresentation,
     transition_table::TransitionTable,
+    utils::apply_action,
     TuringMachine, TuringMachineBuilder,
 };
 
@@ -80,7 +81,7 @@ where
                 )
             });
 
-        crate::utils::apply_action(
+        apply_action(
             action,
             &mut self.tape,
             &mut self.current_cell,
