@@ -538,7 +538,6 @@ mod tests {
         let states = representation.states();
         assert_eq!(states.len(), 4);
 
-        // TODO, solve akwardness of having to to_string()
         let accepting_state = "qa".to_string();
         let rejecting_state = "qr".to_string();
         let states_test = ["q0", "q1"];
