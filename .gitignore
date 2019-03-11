@@ -4,3 +4,4 @@
 runtm
 Tests
 .nfs*
+src/*.tm
