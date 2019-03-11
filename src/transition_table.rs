@@ -38,5 +38,5 @@ where
     /// `Option<T>` in order to account for invalid parsing
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
-        Builder: TransitionTableBuilder<StateTy>;
+        Builder: TransitionTableBuilder<StateTy, InputTy = Self::InputTy>;
 }

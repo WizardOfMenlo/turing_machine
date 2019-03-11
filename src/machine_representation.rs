@@ -47,5 +47,8 @@ where
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
         Builder: MachineRepresentationBuilder<StateTy>,
-        Builder::TableBuilder: TransitionTableBuilder<StateTy>;
+        Builder::TableBuilder: TransitionTableBuilder<
+            StateTy,
+            InputTy = <Self::TableTy as TransitionTable<StateTy>>::InputTy,
+        >;
 }

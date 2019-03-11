@@ -104,7 +104,8 @@ fn convert_to_char(s: &str) -> Option<char> {
 }
 
 impl TransitionTableBuilder<String> for MachineTableParser {
-    type ErrorType = TransitionTableError;
+    type InputTy = char;
+    type ErrorTy = TransitionTableError;
 
     fn parse_line(&mut self, line: &str) -> Result<(), TransitionTableError> {
         // Skip whitespace

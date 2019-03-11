@@ -50,7 +50,7 @@ fn run<T, Repr>(
 ) -> Result<ExecutionResult<T>, ErrorType<T>>
 where
     T: TuringMachine<StateTy = String, ReprTy = Repr>,
-    Repr: MachineRepresentation<String>,
+    Repr: MachineRepresentation<String, InputTy = char>,
 {
     // One of the two branches must necessarily be true
     let tape: Vec<char> = match tape_file {

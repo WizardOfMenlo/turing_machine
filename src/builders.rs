@@ -4,27 +4,27 @@ use hashbrown::HashSet;
 use std::io::{BufRead, BufReader, Read};
 
 // TODO, would it generally be worth to replace at least some of these with structs? Or do we need the full generality of the problem?
-// Todo, transitiontable builder is not generic over input types
 
 /// A trait to generally parse a transition table
 pub trait TransitionTableBuilder<StateTy>
 where
     StateTy: StateTrait,
 {
-    type ErrorType: From<std::io::Error>;
+    type InputTy;
+    type ErrorTy: From<std::io::Error>;
 
-    fn parse_line(&mut self, line: &str) -> Result<(), Self::ErrorType>;
+    fn parse_line(&mut self, line: &str) -> Result<(), Self::ErrorTy>;
     fn build_from_lines(
         &mut self,
         lines: impl Iterator<Item = String>,
-    ) -> Result<(), Self::ErrorType> {
+    ) -> Result<(), Self::ErrorTy> {
         for line in lines {
             self.parse_line(&line)?;
         }
         Ok(())
     }
 
-    fn build_from_reader(&mut self, reader: impl Read) -> Result<(), Self::ErrorType> {
+    fn build_from_reader(&mut self, reader: impl Read) -> Result<(), Self::ErrorTy> {
         let r = BufReader::new(reader);
         self.build_from_lines(r.lines().filter_map(|r| r.ok()))
     }
@@ -33,7 +33,7 @@ where
     fn alphabet(&self) -> HashSet<char>;
 
     /// Given a current state, what is the transitions that we can take?
-    fn get_state_transitions(&self, state: &StateTy) -> Vec<(char, Action<StateTy>)>;
+    fn get_state_transitions(&self, state: &StateTy) -> Vec<(Self::InputTy, Action<StateTy>)>;
 }
 
 pub trait MachineRepresentationBuilder<StateTy>

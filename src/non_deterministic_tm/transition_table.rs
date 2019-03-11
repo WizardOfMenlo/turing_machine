@@ -34,7 +34,7 @@ where
 
     fn from_builder<Builder>(b: &Builder) -> Result<Self, Self::ErrorTy>
     where
-        Builder: TransitionTableBuilder<StateTy>,
+        Builder: TransitionTableBuilder<StateTy, InputTy = char>,
     {
         let mut transitions = HashMap::new();
 
