@@ -62,7 +62,7 @@ shift# _ toStart # L
 toStart 0 toStart 0 L
 toStart 1 toStart 1 L
 toStart # toStart # L
-toStart ^ start0 ^ S
+toStart ^ start0 ^ L
 
 start0 ^ 0?0 ^ R
 
@@ -182,7 +182,7 @@ BC 1 BC 1 L
 BC # BC # L
 BC $ BC $ L
 BC _ BC _ L
-BC ^ C ^ S
+BC ^ C ^ L
 
 C # C # R
 C ^ C ^ R

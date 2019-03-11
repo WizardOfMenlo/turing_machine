@@ -1,4 +1,4 @@
-states 20
+states 21
 start
 write0
 write1
@@ -13,6 +13,7 @@ expect1
 expect0C
 expect1C
 compare
+compareStay
 compareNext
 goToNextChar
 validate
@@ -81,9 +82,11 @@ compareNext $ compareNext $ L
 compareNext ^ goToNextChar ^ R
 
 goToNextChar $ goToNextChar $ R
-goToNextChar 0 compare 0 S
-goToNextChar 1 compare 1 S
+goToNextChar 0 compareStay 0 L
+goToNextChar 1 compareStay 1 L
 goToNextChar # validate # L
+
+compareStay $ compare $ R
 
 validate $ validate $ L
 validate ^ check ^ R
