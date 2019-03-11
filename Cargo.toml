@@ -16,6 +16,3 @@ criterion = "0.2"
 [[bench]]
 name = "action_benchmark"
 harness = false
-
-[profile.release]
-debug = true
