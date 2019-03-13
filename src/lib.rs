@@ -1,6 +1,7 @@
 pub mod builders;
 pub mod common;
 pub mod deterministic_tm;
+pub mod limited;
 pub mod machine_parser;
 pub mod machine_representation;
 #[cfg(test)]

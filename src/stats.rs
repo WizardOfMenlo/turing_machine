@@ -46,6 +46,10 @@ impl<T: TuringMachine> TuringMachineStatsExt<T> {
             tm: self.tm,
         }
     }
+
+    pub fn inner(self) -> T {
+        self.tm
+    }
 }
 
 impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {

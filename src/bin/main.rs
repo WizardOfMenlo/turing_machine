@@ -10,10 +10,11 @@ use std::{
 use turing_machine::{
     builders::TuringMachineBuilder,
     deterministic_tm::{DeterministicMachineRepresentation, DeterministicTuringMachine},
+    limited::LimitedTuringMachineExt,
     machine_parser::{self, ParsingError},
     machine_representation::MachineRepresentation,
     non_deterministic_tm::{NonDeterministicMachineRepresentation, NonDeterministicTuringMachine},
-    stats::{ExecutionResult, TuringMachineStatsExt},
+    stats::ExecutionResult,
     TuringMachine,
 };
 
@@ -49,6 +50,7 @@ where
 fn run<T, Repr>(
     repr_path: &str,
     tape_file: Option<&str>,
+    limit: Option<usize>,
 ) -> Result<ExecutionResult<T>, ErrorType<T>>
 where
     T: TuringMachine<StateTy = String, ReprTy = Repr>,
@@ -89,7 +91,10 @@ where
     let machine = T::from_builder(builder).map_err(ErrorType::MachineCreation)?;
 
     // Decorate with stats extension
-    let machine = TuringMachineStatsExt::new(machine);
+    let machine = match limit {
+        Some(limit) => LimitedTuringMachineExt::new_with_limit(machine, limit),
+        None => LimitedTuringMachineExt::new(machine),
+    };
 
     debug!("Execution Start ...");
     // Run to completion
@@ -160,6 +165,13 @@ fn main() {
                 .short("n")
                 .help("Use a non deterministic TM"),
         )
+        .arg(
+            Arg::with_name("limit")
+                .takes_value(true)
+                .value_name("STEP_LIMIT")
+                .short("l")
+                .help("Limit the number of steps the machine is allowed to take"),
+        )
         .get_matches();
 
     // Initialize the logger
@@ -168,18 +180,21 @@ fn main() {
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
     let tape_file = matches.value_of("tapefile");
+    let limit = matches
+        .value_of("limit")
+        .map(|s| s.parse::<usize>().expect("Parsing the argument failed"));
 
     let exit_code = if !matches.is_present("ndtm") {
         let result = run::<
             DeterministicTuringMachine<String>,
             DeterministicMachineRepresentation<String>,
-        >(repr_path, tape_file);
+        >(repr_path, tape_file, limit);
         handle_and_get_exit_code(result)
     } else {
         let result = run::<
             NonDeterministicTuringMachine<String>,
             NonDeterministicMachineRepresentation<String>,
-        >(repr_path, tape_file);
+        >(repr_path, tape_file, limit);
         handle_and_get_exit_code(result)
     };
 
