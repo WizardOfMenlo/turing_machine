@@ -49,26 +49,13 @@ where
 
 fn run<T, Repr>(
     repr_path: &str,
-    tape_file: Option<&str>,
+    tape: Vec<char>,
     limit: Option<usize>,
 ) -> Result<ExecutionResult<T>, ErrorType<T>>
 where
     T: TuringMachine<StateTy = String, ReprTy = Repr>,
     Repr: MachineRepresentation<String, InputTy = char>,
 {
-    // One of the two branches must necessarily be true
-    let tape: Vec<char> = match tape_file {
-        Some(p) => {
-            let mut input_file = File::open(p)?;
-            let mut buf = String::new();
-            input_file.read_to_string(&mut buf)?;
-            buf.chars()
-                .filter(|c| c.is_ascii() && !c.is_whitespace())
-                .collect()
-        }
-        None => Vec::new(),
-    };
-
     info!("Tape: {:?}", tape);
 
     // Open the repr file
@@ -139,7 +126,7 @@ fn handle_and_get_exit_code<T: TuringMachine + Display>(
     }
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     let matches = App::new("Turing Machine")
         .version("0.1")
         .author("Giacomo Fenzi <giacomofenzi@outlook.com>")
@@ -172,6 +159,14 @@ fn main() {
                 .short("l")
                 .help("Limit the number of steps the machine is allowed to take"),
         )
+        .arg(
+            Arg::with_name("tapevalue")
+                .short("T")
+                .conflicts_with("tapefile")
+                .takes_value(true)
+                .value_name("TAPE")
+                .help("Inline tape for testing"),
+        )
         .get_matches();
 
     // Initialize the logger
@@ -180,6 +175,23 @@ fn main() {
     // Path is required, so it must be this
     let repr_path = matches.value_of("repr").unwrap();
     let tape_file = matches.value_of("tapefile");
+
+    // One of the two branches must necessarily be true
+    let tape: Vec<char> = match tape_file {
+        Some(p) => {
+            let mut input_file = File::open(p)?;
+            let mut buf = String::new();
+            input_file.read_to_string(&mut buf)?;
+            buf.chars()
+                .filter(|c| c.is_ascii() && !c.is_whitespace())
+                .collect()
+        }
+        None => match matches.value_of("tapevalue") {
+            Some(s) => s.chars().collect(),
+            None => Vec::new(),
+        },
+    };
+
     let limit = matches
         .value_of("limit")
         .map(|s| s.parse::<usize>().expect("Parsing the argument failed"));
@@ -188,13 +200,13 @@ fn main() {
         let result = run::<
             DeterministicTuringMachine<String>,
             DeterministicMachineRepresentation<String>,
-        >(repr_path, tape_file, limit);
+        >(repr_path, tape, limit);
         handle_and_get_exit_code(result)
     } else {
         let result = run::<
             NonDeterministicTuringMachine<String>,
             NonDeterministicMachineRepresentation<String>,
-        >(repr_path, tape_file, limit);
+        >(repr_path, tape, limit);
         handle_and_get_exit_code(result)
     };
 
