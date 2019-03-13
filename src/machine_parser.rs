@@ -109,8 +109,9 @@ impl TransitionTableBuilder<String> for MachineTableParser {
     type ErrorTy = TransitionTableError;
 
     fn parse_line(&mut self, line: &str) -> Result<(), TransitionTableError> {
+        let line = line.trim();
         // Skip whitespace
-        if line.trim() == "" {
+        if line == "" {
             return Ok(());
         }
 

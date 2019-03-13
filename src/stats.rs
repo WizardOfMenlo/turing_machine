@@ -65,6 +65,7 @@ impl<T: TuringMachine> TuringMachine for TuringMachineStatsExt<T> {
     fn step(&mut self) {
         self.num_steps = self.num_steps.saturating_add(1);
         debug!("Step #{}", self.num_steps);
+        debug!("Tape: {:?}", self.tape());
         self.tm.step();
     }
 
