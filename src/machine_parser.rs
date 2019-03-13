@@ -52,7 +52,7 @@ pub enum AlphabetError {
 
 #[derive(Debug)]
 pub enum TransitionTableError {
-    InvalidNumberOfTokens(usize),
+    InvalidNumberOfTokens(Vec<String>, usize),
     TokenNotAChar(String),
     InvalidMotion(String),
     IO(io::Error),
@@ -117,7 +117,10 @@ impl TransitionTableBuilder<String> for MachineTableParser {
         let tokens: Vec<&str> = line.split(' ').collect();
         let num_tokens = tokens.len();
         if num_tokens != 5 {
-            return Err(TransitionTableError::InvalidNumberOfTokens(num_tokens));
+            return Err(TransitionTableError::InvalidNumberOfTokens(
+                tokens.iter().map(ToString::to_string).collect(),
+                num_tokens,
+            ));
         }
 
         let start_state = tokens[0].trim();
