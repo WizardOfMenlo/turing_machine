@@ -149,6 +149,7 @@ fn main() -> io::Result<()> {
         )
         .arg(
             Arg::with_name("ndtm")
+                .long("nondeterministic")
                 .short("n")
                 .help("Use a non deterministic TM"),
         )
@@ -157,11 +158,13 @@ fn main() -> io::Result<()> {
                 .takes_value(true)
                 .value_name("STEP_LIMIT")
                 .short("l")
+                .long("limit")
                 .help("Limit the number of steps the machine is allowed to take"),
         )
         .arg(
             Arg::with_name("tapevalue")
                 .short("T")
+                .long("tape")
                 .conflicts_with("tapefile")
                 .takes_value(true)
                 .value_name("TAPE")
