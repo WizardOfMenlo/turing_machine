@@ -1,4 +1,4 @@
-states 59
+states 70
 start
 move_ptr_left
 goto_start_and_execute
@@ -49,13 +49,24 @@ shift_to_dollar>
 shift_to_dollar<
 start_shift
 shift_to_dollar+
-check_ptr
+check_ptr_close
 shift_to_dollar[
 shift_to_dollar-
-branch
+branch_close
 loop
 shift_to_dollar]
 go_to_bracket
+shift_left+
+shift_left[
+shift_left>
+shift_left<
+jump
+shift_left-
+shift_left]
+go_to_close_bracket
+check_ptr_open
+goto_new_start
+branch_open
 accept +
 reject -
 alphabet 12 < > + - [ ] 0 1 @ ^ # $
@@ -346,36 +357,129 @@ copy_ptr_right _ copy_ptr_right0 ^ L
 copy_ptr_right0 ^ move_ip 0 L
 copy_ptr_right1 ^ move_ip 1 L
 
-loop_start < move_ip < L
-loop_start > move_ip > L
-loop_start + move_ip + L
-loop_start - move_ip - L
-loop_start [ move_ip [ L
-loop_start ] move_ip ] L
+loop_start < check_ptr_open < L
+loop_start > check_ptr_open > L
+loop_start + check_ptr_open + L
+loop_start - check_ptr_open - L
+loop_start [ check_ptr_open [ L
+loop_start ] check_ptr_open ] L
 
-loop_end # check_ptr # R
-loop_end < check_ptr < R
-loop_end > check_ptr > R
-loop_end + check_ptr + R
-loop_end - check_ptr - R
-loop_end [ check_ptr [ R
-loop_end ] check_ptr ] R
+check_ptr_open ^ branch_open ^ R
+check_ptr_open < check_ptr_open < R
+check_ptr_open > check_ptr_open > R
+check_ptr_open + check_ptr_open + R
+check_ptr_open - check_ptr_open - R
+check_ptr_open [ check_ptr_open [ R
+check_ptr_open ] check_ptr_open ] R
+check_ptr_open 0 check_ptr_open 0 R
+check_ptr_open 1 check_ptr_open 1 R
+check_ptr_open @ check_ptr_open @ R
+check_ptr_open # check_ptr_open # R
 
-check_ptr ^ branch ^ R
-check_ptr < check_ptr < R
-check_ptr > check_ptr > R
-check_ptr + check_ptr + R
-check_ptr - check_ptr - R
-check_ptr [ check_ptr [ R
-check_ptr ] check_ptr ] R
-check_ptr 0 check_ptr 0 R
-check_ptr 1 check_ptr 1 R
-check_ptr @ check_ptr @ R
-check_ptr # check_ptr # R
+branch_open 0 jump 0 L
+branch_open 1 move_ip 1 L
+branch_open _ jump 0 L
 
-branch 0 loop 0 L
-branch 1 move_ip 1 L
-branch _ loop 0 L
+jump $ go_to_close_bracket $ R
+jump < jump < L
+jump > jump > L
+jump + jump + L
+jump - jump - L
+jump [ jump [ L
+jump ] jump ] L
+jump 0 jump 0 L
+jump 1 jump 1 L
+jump ^ jump ^ L
+jump # jump # L
+
+go_to_close_bracket ] shift_left] $ L
+go_to_close_bracket < go_to_close_bracket < R
+go_to_close_bracket > go_to_close_bracket > R
+go_to_close_bracket + go_to_close_bracket + R
+go_to_close_bracket - go_to_close_bracket - R
+go_to_close_bracket [ go_to_close_bracket [ R
+go_to_close_bracket @ go_to_close_bracket @ R
+go_to_close_bracket ^ go_to_close_bracket ^ R
+go_to_close_bracket # go_to_close_bracket # R
+go_to_close_bracket $ go_to_close_bracket $ R
+
+
+shift_left< < shift_left< < L
+shift_left< > shift_left> < L
+shift_left< + shift_left+ < L
+shift_left< - shift_left- < L
+shift_left< [ shift_left[ < L
+shift_left< ] shift_left] < L
+
+shift_left> < shift_left< > L
+shift_left> > shift_left> > L
+shift_left> + shift_left+ > L
+shift_left> - shift_left- > L
+shift_left> [ shift_left[ > L
+shift_left> ] shift_left] > L
+
+shift_left+ < shift_left< + L
+shift_left+ > shift_left> + L
+shift_left+ + shift_left+ + L
+shift_left+ - shift_left- + L
+shift_left+ [ shift_left[ + L
+shift_left+ ] shift_left] + L
+
+shift_left- < shift_left< - L
+shift_left- > shift_left> - L
+shift_left- + shift_left+ - L
+shift_left- - shift_left- - L
+shift_left- [ shift_left[ - L
+shift_left- ] shift_left] - L
+
+shift_left[ $ goto_new_start [ R
+shift_left[ < shift_left< [ L
+shift_left[ > shift_left> [ L
+shift_left[ + shift_left+ [ L
+shift_left[ - shift_left- [ L
+shift_left[ [ shift_left[ [ L
+shift_left[ ] shift_left] [ L
+
+shift_left] < shift_left< ] L
+shift_left] > shift_left> ] L
+shift_left] + shift_left+ ] L
+shift_left] - shift_left- ] L
+shift_left] [ shift_left[ ] L
+shift_left] ] shift_left] ] L
+
+goto_new_start $ start_execution $ R
+goto_new_start < goto_new_start < R
+goto_new_start > goto_new_start > R
+goto_new_start + goto_new_start + R
+goto_new_start - goto_new_start - R
+goto_new_start [ goto_new_start [ R
+goto_new_start ] goto_new_start ] R
+
+
+
+loop_end # check_ptr_close # R
+loop_end < check_ptr_close < R
+loop_end > check_ptr_close > R
+loop_end + check_ptr_close + R
+loop_end - check_ptr_close - R
+loop_end [ check_ptr_close [ R
+loop_end ] check_ptr_close ] R
+
+check_ptr_close ^ branch_close ^ R
+check_ptr_close < check_ptr_close < R
+check_ptr_close > check_ptr_close > R
+check_ptr_close + check_ptr_close + R
+check_ptr_close - check_ptr_close - R
+check_ptr_close [ check_ptr_close [ R
+check_ptr_close ] check_ptr_close ] R
+check_ptr_close 0 check_ptr_close 0 R
+check_ptr_close 1 check_ptr_close 1 R
+check_ptr_close @ check_ptr_close @ R
+check_ptr_close # check_ptr_close # R
+
+branch_close 0 loop 0 L
+branch_close 1 move_ip 1 L
+branch_close _ loop 0 L
 
 loop $ go_to_bracket $ L
 loop < loop < L
